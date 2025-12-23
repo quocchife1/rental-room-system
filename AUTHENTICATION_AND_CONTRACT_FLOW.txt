@@ -1,0 +1,775 @@
+═════════════════════════════════════════════════════════════════════════════════
+TỔNG HỢP LUỒNG ĐĂNG KÝ, ĐĂNG NHẬP VÀ KÝ HỢP ĐỒNG - HỆ THỐNG QUẢN LÝ CHO THUÊ PHÒNG
+═════════════════════════════════════════════════════════════════════════════════
+
+Phiên bản: v1.0
+Ngày: Tháng 12, 2025
+Mục đích: Hướng dẫn thiết kế giao diện Frontend dựa trên Backend APIs
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 1: TỔNG QUAN VỀ CÁC LOẠI TÀI KHOẢN VÀ ROLE
+═════════════════════════════════════════════════════════════════════════════════
+
+Hệ thống hỗ trợ 4 loại tài khoản chính:
+
+1. GUEST (Khách vãng lai)
+   ─────────────────────
+   - Là người chưa chính thức đăng ký ký hợp đồng
+   - Chỉ dùng để đăng ký tài khoản sơ lược để xem/đặt phòng trước
+   - Các thông tin: username, password, email, phone, fullName
+   - Có thể nâng cấp lên Tenant khi muốn ký hợp đồng
+   - Đăng ký bằng endpoint: POST /api/auth/register/guest
+
+2. TENANT (Người thuê)
+   ───────────────────
+   - Là người đã ký hợp đồng hoặc chuẩn bị ký hợp đồng
+   - Thông tin chi tiết: CCCD, mã sinh viên, trường đại học, địa chỉ, etc.
+   - Được tạo tự động khi staff nhập thông tin hợp đồng
+   - Có thể đăng ký trực tiếp (nếu chưa là Guest): POST /api/auth/register/tenant
+
+3. PARTNER (Đối tác)
+   ──────────────────
+   - Là chủ trọ ngoài hệ thống muốn đăng tin cho thuê
+   - Đặc quyền: đăng bài viết (PartnerPost), quản lý thanh toán
+   - Các bài viết cần phê duyệt trước khi hiển thị
+   - Đăng ký bằng: POST /api/auth/register/partner
+
+4. EMPLOYEE (Nhân viên)
+   ────────────────────
+   - Chỉ admin tạo tài khoản (không tự đăng ký công khai)
+   - Các position: ADMIN, MANAGER, ACCOUNTANT, MAINTENANCE, RECEPTIONIST
+   - Đăng ký bằng: POST /api/auth/register/employee (admin-only)
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 2: LUỒNG ĐĂNG KÝ TÀI KHOẢN (REGISTRATION FLOW)
+═════════════════════════════════════════════════════════════════════════════════
+
+2.1. ĐĂNG KÝ KHÁCH VÃNG LAI (GUEST REGISTRATION)
+   ──────────────────────────────────────────────
+   
+   Endpoint: POST /api/auth/register/guest
+   
+   Request Body:
+   {
+     "username": "khach123",              // Bắt buộc, duy nhất trong hệ thống
+     "password": "123456",                // Bắt buộc, tối thiểu 6 ký tự
+     "email": "khach@gmail.com",          // Bắt buộc, phải là email hợp lệ
+     "phone": "0359444856",               // Bắt buộc, số điện thoại Việt hợp lệ
+     "fullName": "Trần Văn A",            // Bắt buộc
+     "dob": "2005-05-05"                  // Bắt buộc
+   }
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Guest registered successfully",
+     "data": null,
+     "timestamp": "2025-12-06T15:30:00"
+   }
+   
+   Lỗi có thể xảy ra:
+   - username đã tồn tại (400)
+   - email đã tồn tại (400)
+   - Thông tin không hợp lệ (400)
+   
+   Ghi chú:
+   ✓ Guest được tạo với status = ACTIVE
+   ✓ Mật khẩu được mã hóa (bcrypt)
+   ✓ Hệ thống ghi lại audit log: AuditAction.REGISTER_GUEST
+   ✓ Guest chưa có thông tin chi tiết (CCCD, mã sinh viên, etc.)
+
+
+2.2. ĐĂNG KÝ NGƯỜI THUÊ (TENANT REGISTRATION)
+   ──────────────────────────────────────────
+   
+   Endpoint: POST /api/auth/register/tenant
+   
+   Request Body:
+   {
+     "username": "tenant123",
+     "password": "123456",
+     "email": "tenant@gmail.com",
+     "phone": "0359444856",
+     "fullName": "Nguyễn Quốc Chí",
+     "dob": "2005-05-05",
+     "cccd": "123456789012",              // Căn cước công dân
+     "studentId": "20200123",             // Mã sinh viên
+     "university": "HCMUT"                // Trường đại học
+   }
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Tenant registered successfully"
+   }
+   
+   Ghi chú:
+   ✓ Tenant có đầy đủ thông tin chi tiết
+   ✓ Phù hợp cho người đã sẵn sàng ký hợp đồng
+   ✓ Ghi audit log: AuditAction.REGISTER_TENANT
+
+
+2.3. ĐĂNG KÝ ĐỐI TÁC (PARTNER REGISTRATION)
+   ──────────────────────────────────────────
+   
+   Endpoint: POST /api/auth/register/partner
+   
+   Request Body:
+   {
+     "username": "partner123",
+     "password": "123456",
+     "email": "partner@gmail.com",
+     "phone": "0359444856",
+     "fullName": "Chủ Trọ Tươi"
+   }
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Partner registered successfully"
+   }
+   
+   Ghi chú:
+   ✓ Partner dùng để đăng bài viết cho thuê
+   ✓ Bài viết của partner cần phê duyệt trước khi hiển thị
+   ✓ Ghi audit log: AuditAction.REGISTER_PARTNER
+
+
+2.4. ĐĂNG KÝ NHÂN VIÊN (EMPLOYEE REGISTRATION - ADMIN ONLY)
+   ────────────────────────────────────────────────────────
+   
+   Endpoint: POST /api/auth/register/employee
+   (Yêu cầu quyền ADMIN)
+   
+   Request Body:
+   {
+     "username": "staff123",
+     "password": "123456",
+     "email": "staff@rentalsystem.com",
+     "phone": "0359444856",
+     "fullName": "Nhân Viên Hỗ Trợ",
+     "position": "RECEPTIONIST",          // ADMIN, MANAGER, ACCOUNTANT, MAINTENANCE, RECEPTIONIST
+     "branchCode": "CN01"                 // Mã chi nhánh công tác
+   }
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Employee registered successfully"
+   }
+   
+   Ghi chú:
+   ✓ Chỉ Admin có quyền tạo nhân viên
+   ✓ Mỗi nhân viên gán với một chi nhánh
+   ✓ Position quyết định quyền hạn (RBAC)
+   ✓ Ghi audit log: AuditAction.REGISTER_EMPLOYEE
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 3: LUỒNG ĐĂNG NHẬP (LOGIN FLOW)
+═════════════════════════════════════════════════════════════════════════════════
+
+3.1. ĐĂng NHẬP CHUNG CHO TẤT CẢ LOẠI TÀI KHOẢN
+   ──────────────────────────────────────────────
+   
+   Endpoint: POST /api/auth/login
+   
+   Request Body:
+   {
+     "username": "quocchi5523",           // Hoặc email nếu backend hỗ trợ
+     "password": "123456"
+   }
+   
+   Response (Success - 200):
+   {
+     "statusCode": 200,
+     "message": "Login successful",
+     "data": {
+       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+       "tokenType": "Bearer"
+     },
+     "timestamp": "2025-12-06T15:30:00"
+   }
+   
+   Response (Failure - 401):
+   {
+     "statusCode": 401,
+     "message": "Unauthorized",
+     "error": "Username hoặc mật khẩu không đúng"
+   }
+   
+   Ghi chú:
+   ✓ Token được trả về là JWT (JSON Web Token)
+   ✓ Token Type là "Bearer"
+   ✓ Frontend phải lưu token vào localStorage hoặc sessionStorage
+   ✓ Token hết hạn sau 24 giờ (86400000ms)
+   ✓ Mỗi request sau đó phải gửi: Authorization: Bearer {token}
+   ✓ Hệ thống ghi audit log: AuditAction.LOGIN_SUCCESS hoặc LOGIN_FAILED
+
+
+3.2. CÁCH LƯU TOKEN TRÊN FRONTEND
+   ──────────────────────────────
+   
+   Sau khi login thành công:
+   1. Lưu token: localStorage.setItem('token', response.data.accessToken)
+   2. Lưu thông tin user: localStorage.setItem('user', JSON.stringify(userInfo))
+   3. Redirect đến Dashboard
+   
+   Khi gửi request API sau đó:
+   1. Tự động thêm header: Authorization: Bearer {token}
+   2. Axios client đã cấu hình sẵn interceptor để làm điều này
+   3. Nếu token hết hạn → Backend trả 401 → Frontend redirect đến login
+
+
+3.3. KIỂM TRA NGƯỜI DÙNG ĐĂNG NHẬP
+   ────────────────────────────────
+   
+   Để lấy thông tin người dùng hiện tại:
+   - Decode JWT token để lấy username/email từ claims
+   - Hoặc gọi endpoint: GET /api/me (nếu backend hỗ trợ)
+   
+   Xác định role/position từ:
+   - Claim trong JWT token
+   - Hoặc endpoint /api/user/profile
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 4: LUỒNG KÝ HỢP ĐỒNG (CONTRACT SIGNING FLOW)
+═════════════════════════════════════════════════════════════════════════════════
+
+Có 2 kịch bản chính:
+
+KỊCH BẢN A: Người dùng đã đăng ký Guest trước (có tenantId)
+──────────────────────────────────────────────────────────
+
+   Bước 1: Guest đặt phòng trước
+   ───────────────────────────
+   - Guest đã đăng ký account (khách123)
+   - Staff xem lại thông tin Guest trong hệ thống
+   - Thông tin được lưu lại cho hợp đồng
+   
+   Bước 2: Staff nhập thông tin hợp đồng
+   ───────────────────────────────────────
+   - Staff gọi: POST /api/contracts
+   
+   Request Body:
+   {
+     "branchCode": "CN01",                // Mã chi nhánh
+     "roomNumber": "P101",                // Số phòng
+     "tenantId": 5,                       // ID của Guest/Tenant trong hệ thống ← TÌAY LÀ ĐIỀU KHÁC
+     "deposit": 3000000,                  // Tiền cọc
+     "startDate": "2025-12-01"            // Ngày bắt đầu
+   }
+   
+   Xử lý Backend:
+   ✓ Tìm Tenant theo tenantId
+   ✓ Nếu không tìm thấy, throw error (yêu cầu nhập thông tin đầy đủ)
+   ✓ Tạo Contract với status = PENDING
+   ✓ Sinh file DOCX hợp đồng tự động
+   ✓ Ghi audit log: AuditAction.CREATE_CONTRACT
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Tạo hợp đồng thành công",
+     "data": {
+       "id": 15,
+       "contractFileUrl": "/uploads/generated_contracts/contract_15.docx",
+       "status": "PENDING"
+     }
+   }
+
+
+KỊCH BẢN B: Người dùng CHƯA đăng ký Guest (tenantId = null)
+──────────────────────────────────────────────────────────
+
+   Bước 1: Staff tạo hợp đồng với thông tin đầy đủ
+   ───────────────────────────────────────────────
+   - Staff gọi: POST /api/contracts
+   
+   Request Body:
+   {
+     "branchCode": "CN01",
+     "roomNumber": "P101",
+     "tenantId": null,                    // ← KHÔNG CÓ TENANT CŨ
+     "tenantFullName": "Nguyễn Quốc Chí",
+     "tenantPhoneNumber": "0359444856",
+     "tenantEmail": "chinguyen@gmail.com",
+     "tenantAddress": "123 Nguyễn Huệ",
+     "tenantCccd": "123456789012",
+     "studentId": "20200123",
+     "university": "HCMUT",
+     "deposit": 3000000,
+     "startDate": "2025-12-01"
+   }
+   
+   Xử lý Backend (ContractServiceImpl.getOrCreateTenant):
+   ✓ Kiểm tra email có tồn tại trong bảng Tenant chưa
+   ✓ Kiểm tra CCCD có tồn tại chưa
+   ✓ Kiểm tra mã sinh viên có tồn tại chưa
+   ✓ Nếu có lỗi → throw BadRequestException
+   ✓ Nếu không tồn tại → TỰ ĐỘNG TẠO TENANT MỚI
+       - username = email (VD: chinguyen@gmail.com)
+       - password = "123" (mặc định, người dùng phải đổi sau)
+       - fullName = tenantFullName
+       - email = tenantEmail
+       - phone = tenantPhoneNumber
+       - address = tenantAddress
+       - cccd = tenantCccd
+       - studentId = studentId
+       - university = university
+       - status = ACTIVE
+   ✓ Tạo Contract gắn với Tenant vừa tạo
+   ✓ Sinh file DOCX hợp đồng
+   ✓ Ghi audit log: AuditAction.CREATE_CONTRACT
+   
+   Response (Success):
+   {
+     "statusCode": 201,
+     "message": "Tạo hợp đồng thành công",
+     "data": {
+       "id": 16,
+       "tenantId": 25,                    // ← Tenant vừa được tạo
+       "contractFileUrl": "/uploads/generated_contracts/contract_16.docx",
+       "status": "PENDING"
+     }
+   }
+   
+   ⚠ LƯU Ý QUAN TRỌNG:
+   - Tenant được tạo tự động với password mặc định "123"
+   - Người thuê CẦN ĐỔI MẬT KHẨU ngay sau lần đầu đăng nhập
+   - Email được dùng làm username
+
+
+Bước 3: Ký Hợp Đồng (Upload hợp đồng đã ký)
+─────────────────────────────────────────────
+
+   Endpoint: POST /api/contracts/{id}/upload-signed
+   Method: MULTIPART/FORM-DATA
+   
+   Request:
+   - Path Parameter: id = 15 hoặc 16
+   - Form Data:
+     - file: [PDF/Image file của hợp đồng đã ký]
+   
+   Xử lý Backend:
+   ✓ Tìm Contract theo ID
+   ✓ Lưu file ký (PDF/Image) vào thư mục uploads/contracts
+   ✓ Cập nhật Contract:
+     - signedContractUrl = URL file vừa lưu
+     - status = ACTIVE (từ PENDING → ACTIVE)
+   ✓ Ghi audit log: AuditAction.SIGN_CONTRACT
+   
+   Response (Success):
+   {
+     "statusCode": 200,
+     "message": "Upload hợp đồng đã ký thành công",
+     "data": {
+       "id": 15,
+       "status": "ACTIVE",
+       "signedContractUrl": "/uploads/contracts/contract_15_signed.pdf"
+     }
+   }
+   
+   Ghi chú:
+   ✓ Hợp đồng chỉ có hiệu lực khi:
+     - Có file Word ban đầu (contractFileUrl)
+     - Có file ký bởi người thuê (signedContractUrl)
+     - Status = ACTIVE
+
+
+Bước 4: Tải Hợp Đồng Template
+──────────────────────────────
+
+   Endpoint: GET /api/contracts/{id}/download
+   
+   Xử lý:
+   - Download file DOCX gốc (template) để ký
+   - Trả về file Word định dạng DOCX
+   - Người thuê in ra, ký, và upload lại
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 5: TRẠNG THÁI HỢP ĐỒNG VÀ LUỒNG LỰA CHỌN
+═════════════════════════════════════════════════════════════════════════════════
+
+5.1. CÁC TRẠNG THÁI HỢP ĐỒNG (ContractStatus)
+   ───────────────────────────────────────────
+
+   PENDING (Chờ ký)
+   ────────────────
+   - Hợp đồng vừa tạo, chưa ký
+   - Nhân viên đã sinh file DOCX
+   - Đang chờ người thuê ký và upload file ký
+   - Hành động tiếp theo: Upload hợp đồng đã ký
+
+   ACTIVE (Có hiệu lực)
+   ───────────────────
+   - Hợp đồng đã ký đầy đủ (có file DOCX + file ký)
+   - Phòng chuyển thành status = RENTED
+   - Bắt đầu tính tiền thuê
+   - Có thể tạo hóa đơn hàng tháng
+
+   ENDED (Kết thúc)
+   ────────────────
+   - Hợp đồng đã hết hạn hoặc người thuê trả phòng
+   - Phòng chuyển thành status = AVAILABLE (có thể cho thuê lại)
+
+   CANCELLED (Hủy)
+   ───────────────
+   - Hợp đồng bị hủy trước ngày kết thúc
+   - Phòng chuyển thành status = AVAILABLE
+
+
+5.2. LUỒNG QUYẾT ĐỊNH ĐIỀU KIỆN TẠO HỢP ĐỒNG
+   ───────────────────────────────────────────
+
+   Khi Staff bắt đầu tạo hợp đồng:
+   
+   Frontend cần kiểm tra:
+   ┌─────────────────────────────────────┐
+   │ Người thuê đã có account chưa?      │
+   ├─────────────────────────────────────┤
+   │ YES: Chọn Tenant từ danh sách       │
+   │      → Gọi POST /api/contracts      │
+   │      → Gửi tenantId                 │
+   │                                     │
+   │ NO: Nhập thông tin chi tiết         │
+   │     → Gọi POST /api/contracts       │
+   │     → Gửi tenantFullName,           │
+   │        tenantEmail, CCCD, etc.      │
+   │     → Backend tự tạo Tenant         │
+   └─────────────────────────────────────┘
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 6: VALIDATION VÀ LỖI CẦN XỬ LÝ
+═════════════════════════════════════════════════════════════════════════════════
+
+6.1. VALIDATION ĐĂNG KÝ GUEST
+   ──────────────────────────
+
+   Frontend cần kiểm tra:
+   ✓ username: không trống, 3-50 ký tự, chỉ chữ, số, underscore
+   ✓ password: không trống, >= 6 ký tự
+   ✓ email: không trống, định dạng email hợp lệ
+   ✓ phone: không trống, số điện thoại Việt hợp lệ (bắt đầu 0 hoặc +84)
+   ✓ fullName: không trống, 2-100 ký tự
+   ✓ dob: không trống, định dạng yyyy-MM-dd, không quá hiện tại
+   
+   Backend sẽ kiểm tra thêm:
+   - Username đã tồn tại → 400 Bad Request
+   - Email đã tồn tại → 400 Bad Request
+   - Số điện thoại không hợp lệ → 400 Bad Request
+
+
+6.2. VALIDATION ĐĂNG NHẬP
+   ──────────────────────
+
+   Frontend cần kiểm tra:
+   ✓ username: không trống
+   ✓ password: không trống
+   
+   Backend sẽ kiểm tra:
+   - Username không tồn tại → 401 Unauthorized
+   - Mật khẩu sai → 401 Unauthorized
+   - Account bị disable (status ≠ ACTIVE) → 401
+
+
+6.3. VALIDATION TẠO HỢP ĐỒNG
+   ────────────────────────
+
+   Frontend cần kiểm tra:
+   ✓ branchCode: không trống, phải tồn tại (dropdown)
+   ✓ roomNumber: không trống, phải tồn tại ở chi nhánh đó
+   ✓ deposit: >= 0
+   ✓ startDate: không trống, >= ngày hôm nay
+   
+   Nếu tenantId = null:
+   ✓ tenantFullName: không trống
+   ✓ tenantEmail: không trống, email hợp lệ
+   ✓ tenantPhoneNumber: không trống, số điện thoại hợp lệ
+   ✓ tenantCccd: không trống, 12 chữ số
+   ✓ studentId: không trống
+   ✓ university: không trống
+   
+   Backend sẽ kiểm tra:
+   - Chi nhánh không tồn tại → 404
+   - Phòng không tồn tại → 404
+   - Phòng đang có hợp đồng ACTIVE → 400 (conflict)
+   - Email Tenant đã tồn tại → 400
+   - CCCD đã tồn tại → 400
+   - Mã sinh viên đã tồn tại → 400
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 7: TÓMT TẮT ENDPOINTS
+═════════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION ENDPOINTS:
+─────────────────────────
+POST   /api/auth/register/guest      → Đăng ký khách (yêu cầu: username, password, email, phone, fullName, dob)
+POST   /api/auth/register/tenant     → Đăng ký người thuê
+POST   /api/auth/register/partner    → Đăng ký đối tác
+POST   /api/auth/register/employee   → Tạo tài khoản nhân viên (Admin-only)
+POST   /api/auth/login               → Đăng nhập (request: username, password)
+
+
+CONTRACT ENDPOINTS:
+───────────────────
+POST   /api/contracts                → Tạo hợp đồng mới
+GET    /api/contracts                → Danh sách hợp đồng
+GET    /api/contracts/{id}           → Chi tiết hợp đồng
+POST   /api/contracts/{id}/upload-signed → Upload hợp đồng đã ký
+GET    /api/contracts/{id}/download  → Tải hợp đồng template (DOCX)
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 8: THỨ TỰ PHÁT TRIỂN FRONTEND ĐƯỢC KHUYẾN CÁO
+═════════════════════════════════════════════════════════════════════════════════
+
+Giai đoạn 1: Trang đăng ký/đăng nhập
+────────────────────────────────────
+1. Trang Login
+   - Form: username, password
+   - Button: Đăng nhập
+   - Link: Quên mật khẩu?, Đăng ký
+   - Xử lý: POST /api/auth/login → lưu token → redirect /dashboard
+
+2. Trang Đăng ký Guest
+   - Form: username, password, email, phone, fullName, dob
+   - Button: Đăng ký
+   - Link: Đã có tài khoản? Đăng nhập
+   - Xử lý: POST /api/auth/register/guest → success → redirect /login
+
+3. Trang Đăng ký Tenant (để tương lai)
+   - Form: như Guest + cccd, studentId, university
+   - Xử lý: POST /api/auth/register/tenant
+
+
+Giai đoạn 2: Trang quản lý hợp đồng (Staff)
+─────────────────────────────────────────────
+1. Trang Tạo Hợp Đồng
+   - Form: branchCode, roomNumber, [tenantId hoặc tenantInfo], deposit, startDate
+   - Logic: Nếu chọn tenantId → ẩn form tenantInfo; Nếu không chọn → hiển thị
+   - Button: Tạo hợp đồng
+   - Xử lý: POST /api/contracts → lưu ID → redirect trang chi tiết
+
+2. Trang Chi Tiết Hợp Đồng
+   - Hiển thị thông tin hợp đồng
+   - Nếu status = PENDING: hiển thị nút "Tải hợp đồng", "Upload hợp đồng đã ký"
+   - Nếu status = ACTIVE: hiển thị "Hợp đồng có hiệu lực", link tới hóa đơn
+   - Xử lý: GET /api/contracts/{id}, POST upload-signed, GET download
+
+3. Danh sách Hợp đồng
+   - Bảng: ID, Phòng, Người thuê, Trạng thái, Ngày tạo
+   - Filter: Theo trạng thái (PENDING, ACTIVE, ENDED, CANCELLED)
+   - Link: Click hàng → chi tiết hợp đồng
+
+
+Giai đoạn 3: Trang kỹ thuật (dùng cho kiểm thử)
+────────────────────────────────────────────────
+- Trang AdminDiagnosticsPage
+- Xem số lượng hợp đồng, người thuê, tài khoản
+- Kiểm tra kết nối backend
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 9: MÔ TẢ CHI TIẾT FLOW VĐ HỢP LÝ VÀ DỄ HIỂU
+═════════════════════════════════════════════════════════════════════════════════
+
+SCENARIO: Một sinh viên muốn thuê phòng
+
+Bước 1: Sinh viên truy cập Home Page (chưa đăng nhập)
+  ↓
+  Sinh viên thấy các phòng có sẵn
+  Chọn "Xem chi tiết" hoặc "Đặt phòng"
+  
+Bước 2: Sinh viên click "Đạt phòng"
+  ↓
+  Hệ thống kiểm tra: Đã đăng nhập chưa?
+  → Nếu CHƯA: redirect /auth/login
+  → Nếu CÓ: tiếp tục tới trang booking
+
+Bước 3: Sinh viên đăng nhập hoặc đăng ký Guest
+  
+  CASE A: Đã có account
+  ─────────────────────
+  - Nhập username, password
+  - Click "Đăng nhập"
+  - POST /api/auth/login
+  - Lưu token vào localStorage
+  - Redirect Dashboard
+
+  CASE B: Chưa có account
+  ──────────────────────
+  - Click "Đăng ký"
+  - Nhập: username, password, email, phone, fullName, dob
+  - Click "Đăng ký khách"
+  - POST /api/auth/register/guest
+  - Success → hiển thị "Đăng ký thành công"
+  - Redirect /auth/login để đăng nhập
+
+Bước 4: Sinh viên xem phòng và đặt
+  ↓
+  POST /api/reservations (tạo phiếu đặt phòng)
+  Lưu reservation ID
+  Tạo hóa đơn đặt cọc (nếu có)
+
+Bước 5: Staff/Nhân viên xem đơn đặt → gọi sinh viên
+  ↓
+  Sinh viên đến trực tiếp ký hợp đồng
+  Staff nhập thông tin hợp đồng
+
+  CASE A: Sinh viên đã đăng ký Guest (trước đó)
+  ────────────────────────────────────────────
+  - Staff tìm Guest trong danh sách
+  - Chọn Guest → ID sinh viên tự điền
+  - Nhập thêm: CCCD, mã sinh viên, trường, địa chỉ
+  - Click "Tạo hợp đồng"
+  - POST /api/contracts (tenantId = ID Guest, + các field khác)
+  - Lưu contractId
+  - Hợp đồng được tạo với status = PENDING
+
+  CASE B: Sinh viên CHƯA đăng ký (hoặc đăng ký từng phần)
+  ─────────────────────────────────────────────────────
+  - Staff nhập đầy đủ: tên, email, phone, CCCD, mã SV, trường, địa chỉ
+  - Click "Tạo hợp đồng"
+  - POST /api/contracts (tenantId = null, + các field tenantInfo)
+  - Backend tự tạo Tenant mới
+  - Hợp đồng được tạo với status = PENDING
+
+Bước 6: Staff in ra file hợp đồng DOCX để sinh viên ký
+  ↓
+  GET /api/contracts/{id}/download
+  Lưu file DOCX về máy tính
+  In ra trên giấy
+
+Bước 7: Sinh viên ký hợp đồng (trên giấy)
+  ↓
+  Scan hoặc chụp ảnh PDF/JPG file đã ký
+
+Bước 8: Staff upload file ký vào hệ thống
+  ↓
+  Trang chi tiết hợp đồng (status = PENDING)
+  Click "Upload hợp đồng đã ký"
+  Chọn file PDF/JPG vừa scan
+  Click "Upload"
+  POST /api/contracts/{id}/upload-signed
+  Hợp đồng status chuyển → ACTIVE
+  Phòng status chuyển → RENTED
+
+Bước 9: Sinh viên đăng nhập vào hệ thống (dùng tài khoản Tenant mới)
+  ↓
+  Username: email (VD: chinguyen@gmail.com)
+  Password: 123 (mặc định)
+  ⚠ Cần đổi mật khẩu ngay lần đầu
+  Xem thông tin hợp đồng
+  Xem hoá đơn hàng tháng
+  Nộp tiền (Online pay hoặc offline)
+
+Bước 10: Mỗi tháng hệ thống tự động tạo hoá đơn
+  ↓
+  AutoBillingScheduler chạy vào ngày 1 hàng tháng
+  Tạo hóa đơn cho tất cả hợp đồng ACTIVE
+  Gồm: tiền phòng cơ bản + dịch vụ (điện, nước, internet, etc.)
+  Sinh viên nhận được thông báo
+  Thanh toán hoá đơn
+  Nhân viên kế toán xác nhận
+  Ghi nhận thanh toán
+
+
+═════════════════════════════════════════════════════════════════════════════════
+PHẦN 10: DANH SÁCH TRƯỜNG DỮ LIỆU MỘT SỐ ĐỐI TƯỢNG CHÍNH
+═════════════════════════════════════════════════════════════════════════════════
+
+GUEST (Khách vãng lai)
+────────────────────
+- id: Long
+- username: String (duy nhất)
+- password: String (mã hóa)
+- email: String (duy nhất)
+- phoneNumber: String
+- fullName: String
+- dob: String (YYYY-MM-DD)
+- status: UserStatus (ACTIVE, INACTIVE, BANNED)
+- createdAt: LocalDateTime
+
+TENANT (Người thuê)
+──────────────────
+- id: Long
+- username: String (duy nhất) → thường = email
+- password: String (mã hóa)
+- email: String (duy nhất)
+- phoneNumber: String
+- fullName: String
+- address: String
+- cccd: String (12 chữ số)
+- studentId: String
+- university: String
+- status: UserStatus
+- createdAt: LocalDateTime
+
+CONTRACT (Hợp đồng)
+──────────────────
+- id: Long
+- tenantId: Long (FK → Tenant)
+- roomId: Long (FK → Room)
+- branchCode: String
+- roomNumber: String
+- startDate: LocalDate
+- endDate: LocalDate (nullable)
+- deposit: BigDecimal (tiền cọc)
+- status: ContractStatus (PENDING, ACTIVE, ENDED, CANCELLED)
+- contractFileUrl: String (link DOCX)
+- signedContractUrl: String (link file ký)
+- createdAt: LocalDateTime
+
+ROOM (Phòng)
+────────────
+- id: Long
+- roomCode: String (duy nhất) → VD: CN01-P101
+- branchCode: String
+- roomNumber: String
+- area: BigDecimal (diện tích m²)
+- price: BigDecimal (giá thuê tháng)
+- status: RoomStatus (AVAILABLE, RENTED, MAINTENANCE)
+- description: String
+
+BRANCH (Chi nhánh)
+──────────────────
+- id: Long
+- branchCode: String (duy nhất) → VD: CN01
+- branchName: String
+- address: String
+- phoneNumber: String
+
+
+═════════════════════════════════════════════════════════════════════════════════
+KẾT LUẬN
+═════════════════════════════════════════════════════════════════════════════════
+
+Hệ thống có 2 luồng chính:
+
+1. LUỒNG ĐĂNG KÝ / ĐĂNG NHẬP:
+   - Guest đăng ký để xem phòng
+   - Tenant đăng ký khi chuẩn bị ký hợp đồng
+   - Partner đăng ký để đăng tin cho thuê
+   - Employee được tạo bởi Admin
+   - Tất cả đều dùng chung endpoint LOGIN để nhận JWT token
+
+2. LUỒNG KÝ HỢP ĐỒNG:
+   - Staff tạo hợp đồng → Hợp đồng PENDING
+   - Nếu Tenant đã tồn tại: ghi tenantId
+   - Nếu Tenant chưa tồn tại: ghi thông tin chi tiết → Backend tự tạo
+   - Sinh viên/Người thuê tải file DOCX, ký, quét/chụp
+   - Staff upload file ký → Hợp đồng ACTIVE
+   - Phòng chuyển thành RENTED
+   - Hàng tháng tự động tạo hoá đơn
+
+Frontend cần thiết kế các form tương ứng với luồng này để người dùng có thể
+tương tác dễ dàng với hệ thống.
+
+═════════════════════════════════════════════════════════════════════════════════

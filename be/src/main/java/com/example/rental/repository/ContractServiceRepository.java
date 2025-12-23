@@ -1,0 +1,9 @@
+package com.example.rental.repository;
+
+import com.example.rental.entity.ContractService;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface ContractServiceRepository extends JpaRepository<ContractService, Long> {
+    List<ContractService> findByContractId(Long contractId);
+}

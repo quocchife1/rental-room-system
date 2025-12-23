@@ -1,0 +1,402 @@
+OOP_106003_JAVA_BE — Project Directory Tree
+=============================================
+
+📁 Project Root (d:\Github\OOP_106003_JAVA_BE)
+│
+├── 📁 be/ (Backend — Spring Boot Java)
+│   ├── pom.xml
+│   ├── mvnw
+│   ├── mvnw.cmd
+│   ├── 📁 src/main/java/com/example/rental/
+│   │   ├── RentalApplication.java
+│   │   │
+│   │   ├── 📁 config/
+│   │   │   ├── AppConfig.java
+│   │   │   ├── CorsProperties.java
+│   │   │   ├── JwtProperties.java
+│   │   │   ├── SecurityConfig.java
+│   │   │   ├── SwaggerConfig.java
+│   │   │   └── WebConfig.java
+│   │   │
+│   │   ├── 📁 controller/ (24 REST Controllers)
+│   │   │   ├── AuthController.java
+│   │   │   ├── RoomController.java
+│   │   │   ├── BranchController.java
+│   │   │   ├── ContractController.java
+│   │   │   ├── InvoiceController.java
+│   │   │   ├── PaymentController.java
+│   │   │   ├── ReservationController.java
+│   │   │   ├── MaintenanceController.java
+│   │   │   ├── DamageReportController.java
+│   │   │   ├── EmployeeController.java
+│   │   │   ├── TenantController.java
+│   │   │   ├── PartnerController.java
+│   │   │   ├── AuditLogController.java
+│   │   │   ├── DashboardController.java
+│   │   │   ├── RoomImageController.java
+│   │   │   ├── RentalServiceController.java
+│   │   │   ├── ContractServiceController.java
+│   │   │   └── (+ others)
+│   │   │
+│   │   ├── 📁 dto/ (Data Transfer Objects)
+│   │   │   ├── ApiResponseDto.java (Canonical wrapper)
+│   │   │   ├── 📁 auth/
+│   │   │   │   ├── AuthLoginRequest.java
+│   │   │   │   ├── AuthRegisterRequest.java
+│   │   │   │   ├── AuthResponse.java
+│   │   │   │   └── (+ role-specific register DTOs)
+│   │   │   ├── 📁 room/
+│   │   │   │   ├── RoomRequest.java
+│   │   │   │   ├── RoomResponse.java
+│   │   │   │   ├── RoomUpdateRequest.java
+│   │   │   │   └── RoomImageRequest/Response.java
+│   │   │   ├── 📁 invoice/
+│   │   │   │   ├── InvoiceRequest.java
+│   │   │   │   ├── InvoiceResponse.java
+│   │   │   │   ├── InvoiceDetailRequest.java
+│   │   │   │   └── InvoiceDetailResponse.java
+│   │   │   ├── 📁 contract/
+│   │   │   │   ├── ContractCreateRequest.java
+│   │   │   │   └── ContractResponse.java
+│   │   │   ├── 📁 payment/
+│   │   │   │   ├── PaymentRequest.java
+│   │   │   │   └── PaymentResponse.java
+│   │   │   ├── 📁 reservation/
+│   │   │   │   ├── ReservationRequest.java
+│   │   │   │   └── ReservationResponse.java
+│   │   │   ├── 📁 maintenance/
+│   │   │   │   ├── MaintenanceRequestCreate.java
+│   │   │   │   ├── MaintenanceResponse.java
+│   │   │   │   └── MaintenanceUpdate.java
+│   │   │   ├── 📁 branch/
+│   │   │   │   ├── BranchRequest.java
+│   │   │   │   └── BranchResponse.java
+│   │   │   ├── 📁 employee/
+│   │   │   │   └── EmployeeResponse.java
+│   │   │   └── (+ damage, partner, tenant, dashboard, rentalservice DTOs)
+│   │   │
+│   │   ├── 📁 entity/ (JPA Entities)
+│   │   │   ├── BaseEntity.java
+│   │   │   ├── User Entities:
+│   │   │   │   ├── Guest.java
+│   │   │   │   ├── Tenant.java
+│   │   │   │   ├── Employees.java
+│   │   │   │   └── Partners.java
+│   │   │   ├── Room Management:
+│   │   │   │   ├── Room.java
+│   │   │   │   ├── RoomStatus.java
+│   │   │   │   ├── RoomImage.java
+│   │   │   │   └── Branch.java
+│   │   │   ├── Contracts & Services:
+│   │   │   │   ├── Contract.java
+│   │   │   │   ├── ContractStatus.java
+│   │   │   │   ├── ContractService.java
+│   │   │   │   ├── RentalServiceItem.java
+│   │   │   │   └── ServiceItem.java
+│   │   │   ├── Financial:
+│   │   │   │   ├── Invoice.java
+│   │   │   │   ├── InvoiceDetail.java
+│   │   │   │   ├── InvoiceStatus.java
+│   │   │   │   ├── Payment.java
+│   │   │   │   └── PaymentMethod.java
+│   │   │   ├── Operational:
+│   │   │   │   ├── Reservation.java
+│   │   │   │   ├── ReservationStatus.java
+│   │   │   │   ├── MaintenanceRequest.java
+│   │   │   │   ├── MaintenanceStatus.java
+│   │   │   │   ├── MaintenanceImage.java
+│   │   │   │   ├── DamageReport.java
+│   │   │   │   └── DamageImage.java
+│   │   │   ├── System:
+│   │   │   │   ├── AuditLog.java
+│   │   │   │   ├── AuditAction.java (Enum)
+│   │   │   │   ├── UserStatus.java (Enum)
+│   │   │   │   └── EmployeePosition.java (Enum)
+│   │   │   └── Partner:
+│   │   │       ├── PartnerPost.java
+│   │   │       ├── PostType.java
+│   │   │       ├── PostImage.java
+│   │   │       ├── PartnerPayment.java
+│   │   │       └── PostApprovalStatus.java
+│   │   │
+│   │   ├── 📁 repository/ (JPA Repositories - 30+)
+│   │   │   ├── RoomRepository.java
+│   │   │   ├── BranchRepository.java
+│   │   │   ├── ContractRepository.java
+│   │   │   ├── InvoiceRepository.java
+│   │   │   ├── PaymentRepository.java
+│   │   │   ├── ReservationRepository.java
+│   │   │   ├── MaintenanceRequestRepository.java
+│   │   │   ├── DamageReportRepository.java
+│   │   │   ├── AuditLogRepository.java
+│   │   │   ├── EmployeeRepository.java
+│   │   │   ├── TenantRepository.java
+│   │   │   ├── GuestRepository.java
+│   │   │   ├── PartnerRepository.java
+│   │   │   ├── ServiceItemRepository.java
+│   │   │   ├── RentalServiceRepository.java
+│   │   │   └── (+ 15 more repositories)
+│   │   │
+│   │   ├── 📁 service/ (Service Interfaces)
+│   │   │   ├── AuthService.java
+│   │   │   ├── RoomService.java
+│   │   │   ├── BranchService.java
+│   │   │   ├── ContractService.java
+│   │   │   ├── InvoiceService.java
+│   │   │   ├── PaymentService.java
+│   │   │   ├── ReservationService.java
+│   │   │   ├── MaintenanceRequestService.java
+│   │   │   ├── DamageReportService.java
+│   │   │   ├── AuditLogService.java
+│   │   │   ├── EmployeeService.java
+│   │   │   ├── TenantService.java
+│   │   │   ├── GuestService.java
+│   │   │   ├── DashboardService.java
+│   │   │   ├── EmailService.java
+│   │   │   ├── ServiceItemService.java
+│   │   │   ├── RentalServiceService.java
+│   │   │   ├── ContractServiceService.java
+│   │   │   ├── CustomUserDetailsService.java
+│   │   │   └── AuditStatistics.java
+│   │   │
+│   │   ├── 📁 service/impl/ (Service Implementations)
+│   │   │   ├── AuthServiceImpl.java
+│   │   │   ├── RoomServiceImpl.java
+│   │   │   ├── BranchServiceImpl.java
+│   │   │   ├── ContractServiceImpl.java
+│   │   │   ├── InvoiceServiceImpl.java (+ idempotent markPaid)
+│   │   │   ├── PaymentServiceImpl.java (+ processPayment, initiateMoMo)
+│   │   │   ├── ReservationServiceImpl.java
+│   │   │   ├── MaintenanceRequestServiceImpl.java
+│   │   │   ├── DamageReportServiceImpl.java
+│   │   │   ├── AuditLogServiceImpl.java (+ hardened truncation/retry)
+│   │   │   ├── EmployeeServiceImpl.java
+│   │   │   ├── TenantServiceImpl.java
+│   │   │   ├── GuestServiceImpl.java
+│   │   │   ├── DashboardServiceImpl.java
+│   │   │   ├── EmailServiceImpl.java
+│   │   │   ├── ServiceItemServiceImpl.java
+│   │   │   ├── RentalServiceServiceImpl.java
+│   │   │   ├── PartnerServiceImpl.java
+│   │   │   ├── PartnerPostServiceImpl.java
+│   │   │   ├── PartnerPaymentServiceImpl.java
+│   │   │   ├── UserServiceImpl.java
+│   │   │   └── RoomImageServiceImpl.java
+│   │   │
+│   │   ├── 📁 security/
+│   │   │   ├── JwtProvider.java
+│   │   │   ├── JwtUtil.java
+│   │   │   ├── JwtAuthenticationFilter.java
+│   │   │   ├── CustomUserDetails.java
+│   │   │   ├── Audited.java (Annotation)
+│   │   │   ├── AuditAspect.java (AOP)
+│   │   │   └── util/CodeGenerator.java
+│   │   │
+│   │   ├── 📁 mapper/ (MapStruct Mappers)
+│   │   │   ├── AuditLogMapper.java
+│   │   │   ├── BranchMapper.java
+│   │   │   ├── ContractMapper.java
+│   │   │   ├── ContractServiceMapper.java
+│   │   │   ├── EmployeeMapper.java
+│   │   │   ├── InvoiceMapper.java
+│   │   │   ├── MaintenanceMapper.java
+│   │   │   ├── PartnerMapper.java
+│   │   │   ├── RentalServiceMapper.java
+│   │   │   ├── ReservationMapper.java
+│   │   │   ├── RoomImageMapper.java
+│   │   │   ├── RoomMapper.java
+│   │   │   └── TenantMapper.java
+│   │   │
+│   │   ├── 📁 scheduler/
+│   │   │   ├── AutoBillingScheduler.java (Monthly invoice generation)
+│   │   │   └── InvoiceReminderScheduler.java
+│   │   │
+│   │   ├── 📁 exception/
+│   │   │   ├── GlobalExceptionHandler.java
+│   │   │   ├── BadRequestException.java
+│   │   │   └── ResourceNotFoundException.java
+│   │   │
+│   │   ├── 📁 utils/
+│   │   │   ├── FileStorageService.java
+│   │   │   ├── ContractDocxGenerator.java
+│   │   │   ├── InvoiceEmailTemplateUtil.java
+│   │   │   └── NumberToVietnameseWords.java
+│   │   │
+│   │   └── 📁 seeder/
+│   │       └── DataSeeder.java (Seeds admin/123456, branches, rooms, services)
+│   │
+│   ├── 📁 src/main/resources/
+│   │   └── application.properties (DB, JWT, Email, CORS config)
+│   │
+│   └── 📁 src/test/
+│       └── RentalApplicationTests.java
+│
+├── 📁 fe/ (Frontend — React + Vite + Tailwind)
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js (+ dev server proxy to /api)
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── index.html
+│   │
+│   ├── 📁 src/
+│   │   ├── main.jsx
+│   │   ├── App.jsx (Router with Navbar/Sidebar logic)
+│   │   ├── index.css
+│   │   ├── routes.jsx (Centralized route definitions)
+│   │   │
+│   │   ├── 📁 api/ (API client modules)
+│   │   │   ├── axiosClient.js (Configured with JWT interceptor + unwrap ApiResponseDto)
+│   │   │   ├── rooms.ts
+│   │   │   ├── branches.js
+│   │   │   ├── bookings.js (createReservation, getMyReservationsPaged, confirmReservation, etc)
+│   │   │   ├── payments.js
+│   │   │   ├── invoices.js
+│   │   │   ├── services.js
+│   │   │   └── dashboard.ts
+│   │   │
+│   │   ├── 📁 pages/ (Page components - 23 pages)
+│   │   │   ├── Home.jsx (Hero, featured rooms, branches, CTA)
+│   │   │   ├── AuthPage.jsx (Login/Register forms)
+│   │   │   ├── DashboardPage.jsx
+│   │   │   ├── RoomsPage.jsx
+│   │   │   ├── BookingPage.jsx
+│   │   │   ├── CheckoutPage.jsx (Online pay + MoMo demo initiation)
+│   │   │   ├── BillingPage.jsx (Invoice creation, payments feed, receipt link)
+│   │   │   ├── ReceiptPage.jsx (Printable invoice with subtotal, VAT)
+│   │   │   ├── MaintenancePage.jsx
+│   │   │   ├── ContractsPage.jsx
+│   │   │   ├── EmployeesPage.jsx
+│   │   │   ├── TenantsPage.jsx
+│   │   │   ├── PartnersPage.jsx
+│   │   │   ├── PartnerPage.jsx
+│   │   │   ├── AuditPage.jsx
+│   │   │   ├── DamageReportFlowPage.jsx
+│   │   │   ├── DamageReportPage.jsx
+│   │   │   ├── ReportsPage.jsx
+│   │   │   ├── UserAdminPage.jsx
+│   │   │   ├── AdminDiagnosticsPage.jsx (Health checks: room/branch/contract counts)
+│   │   │   └── (+ other pages)
+│   │   │
+│   │   ├── 📁 components/ (Reusable UI components)
+│   │   │   ├── Navbar.jsx (Logo, nav links, auth buttons, responsive mobile menu)
+│   │   │   ├── Footer.jsx (Multi-column: brand, links, support, contact)
+│   │   │   ├── Header.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── Toast.jsx (Toast notifications)
+│   │   │   ├── RoomCard.jsx
+│   │   │   ├── RoomDetailModal.jsx
+│   │   │   ├── RoomGallery.jsx
+│   │   │   ├── RoomFilters.jsx
+│   │   │   ├── RoomForm.jsx
+│   │   │   ├── RoomList.jsx
+│   │   │   ├── BookingForm.jsx
+│   │   │   ├── LoginForm.jsx
+│   │   │   ├── RegisterForm.jsx
+│   │   │   ├── TenantProfileForm.jsx
+│   │   │   ├── PartnerForm.jsx
+│   │   │   ├── PaymentsFeed.jsx (Uses /api/payments/paged or audit fallback)
+│   │   │   └── PaginatedTable.jsx
+│   │   │
+│   │   ├── 📁 features/ (Redux slices)
+│   │   │   ├── 📁 auth/
+│   │   │   │   └── authSlice.js
+│   │   │   ├── 📁 booking/
+│   │   │   │   └── bookingSlice.js (Redux thunks: createReservation, getReservation)
+│   │   │   ├── 📁 rooms/
+│   │   │   │   └── roomsSlice.js
+│   │   │   └── 📁 invoices/
+│   │   │       └── invoicesSlice.js
+│   │   │
+│   │   ├── 📁 store/
+│   │   │   └── store.js (Redux store with booking reducer registered)
+│   │   │
+│   │   └── 📁 utils/
+│   │       └── validators.js
+│   │
+│   └── 📁 public/ (Static assets)
+│
+├── 📁 uploads/ (Backend file storage)
+│   ├── contracts/
+│   ├── generated_contracts/
+│   └── maintenance/
+│
+├── README.md
+├── HELP.md
+├── pom.xml (Root pom for multi-module? Or just BE?)
+└── rentaldb.sql (Initial database schema)
+
+═══════════════════════════════════════════════════════════════════
+
+KEY FEATURES BY MODULE:
+═══════════════════════
+
+BACKEND (Spring Boot):
+─────────────────────
+✓ Authentication: JWT + Spring Security (admin/123456 seeded)
+✓ Core Entities: Room, Branch, Contract, Invoice, Payment, Reservation, Maintenance, DamageReport
+✓ API Layer: 24 REST controllers returning ApiResponseDto (canonical wrapper)
+✓ Service Layer: Business logic with transactional boundaries
+✓ Data Persistence: JPA/Hibernate + Spring Data repositories
+✓ Audit Logging: AOP-based auditing with REQUIRES_NEW transaction isolation; hardened truncation+retry
+✓ Payments: PaymentServiceImpl persists Payment records; supports processPayment and initiateMoMo (demo)
+✓ Scheduling: AutoBillingScheduler (monthly invoice generation), InvoiceReminderScheduler
+✓ File Upload: FileStorageService for contract PDFs, maintenance images, damage reports
+✓ Email: EmailService for notifications
+✓ CORS: Configured for localhost:3000
+✓ Swagger/OpenAPI: API documentation at /swagger-ui.html
+
+FRONTEND (React + Vite + Tailwind):
+───────────────────────────────────
+✓ Routing: Centralized routes.jsx with dynamic conditional layout (Navbar/Footer for public, Sidebar for dashboards)
+✓ Authentication: Login/Register forms, JWT token persistence in localStorage
+✓ Home Page: Hero section, featured available rooms grid, branches showcase, CTAs
+✓ Room Management: RoomsPage with filters, detail modal, gallery
+✓ Booking Flow: Reservation form → Checkout (Online pay or MoMo demo initiation)
+✓ Invoicing: BillingPage with invoice CRUD, service catalog picker, payments feed, receipt printing
+✓ Payments: PaymentsFeed component (uses /api/payments/paged or audit fallback)
+✓ Dashboard: Staff/admin view with pending invoices, occupancy stats, recent actions
+✓ Admin Diagnostics: Quick health check page showing counts (rooms, branches, contracts, etc)
+✓ Maintenance: Request submission, status tracking
+✓ Audit Logs: Full audit trail viewing
+✓ Responsive Design: Mobile-first with Tailwind CSS (grid, flexbox, animations)
+✓ State Management: Redux Toolkit slices (auth, booking, rooms, invoices)
+✓ API Client: Axios with automatic JWT injection + ApiResponseDto unwrapping
+
+═══════════════════════════════════════════════════════════════════
+
+RECENT IMPROVEMENTS:
+═════════════════════
+
+✓ Fixed bookings.js duplicate import error (merged createReservation defs)
+✓ Fixed AutoBillingScheduler compile errors (uses contractService.findAll().filter, room.price for base rent)
+✓ Fixed PaymentServiceImpl AuditAction.REQUEST_PAYMENT → SYSTEM_AUTO_ACTION
+✓ Fixed PaymentController ApiResponseDto.error(...) call signature
+✓ Added vite.config.js dev proxy routing /api/* to http://localhost:8080
+✓ Rich Home page with hero, rooms grid, branches, CTA sections
+✓ Navbar component (responsive mobile menu, auth state buttons)
+✓ Enhanced Footer (multi-column layout: brand, links, support, contact)
+✓ App layout logic: public pages show Navbar/Footer; dashboards show Sidebar
+✓ AdminDiagnosticsPage at /admin/diagnostics for system health monitoring
+✓ Centralized route definitions in routes.jsx for maintainability
+
+═══════════════════════════════════════════════════════════════════
+
+TO BUILD & RUN LOCALLY:
+═══════════════════════
+
+Backend:
+  cd d:\Github\OOP_106003_JAVA_BE\be
+  mvn clean package -DskipTests
+  mvn spring-boot:run
+
+Frontend:
+  cd d:\Github\OOP_106003_JAVA_BE\fe
+  npm install
+  npm run dev
+
+Expected Result:
+  - Backend runs on http://localhost:8080
+  - Frontend runs on http://localhost:3000
+  - Home page loads available rooms and branches
+  - Admin credentials: admin / 123456
