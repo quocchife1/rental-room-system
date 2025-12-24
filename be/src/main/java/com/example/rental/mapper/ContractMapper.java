@@ -40,6 +40,7 @@ public class ContractMapper {
 
         dto.setStartDate(contract.getStartDate());
         dto.setEndDate(contract.getEndDate());
+        dto.setRoomPrice(contract.getRoom() != null ? contract.getRoom().getPrice() : null);
         dto.setDeposit(contract.getDeposit());
         dto.setStatus(contract.getStatus() != null ? contract.getStatus().name() : null);
         dto.setCreatedAt(contract.getCreatedAt());

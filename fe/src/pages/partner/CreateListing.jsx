@@ -40,15 +40,21 @@ export default function CreateListing() {
                 postType: formData.postType
             };
             const created = await partnerApi.createPost(payload, images);
-            const payUrl = created?.paymentUrl;
-            if (payUrl) {
+            const createdId = created?.id;
+            const createdStatus = created?.status;
+
+            if (createdId && String(createdStatus).toUpperCase() === 'PENDING_PAYMENT') {
                 alert('Đăng tin thành công! Vui lòng thanh toán để hoàn tất.');
-                // Chuyển hướng sang trang thanh toán MoMo ngay sau khi tạo tin
-                window.location.href = payUrl;
-            } else {
-                alert('Đăng tin thành công! Tin đang chờ duyệt.');
-                navigate('/partner/my-listings');
+                const payment = await partnerApi.initiatePostMomoPayment(createdId);
+                const payUrl = payment?.payUrl || payment?.paymentUrl;
+                if (payUrl) {
+                    window.location.href = payUrl;
+                    return;
+                }
             }
+
+            alert('Đăng tin thành công! Tin đang chờ duyệt.');
+            navigate('/partner/my-listings');
         } catch (error) {
             console.error('Create post error:', error);
             const msg = error.response?.data?.message || error.message || 'Không thể đăng tin';

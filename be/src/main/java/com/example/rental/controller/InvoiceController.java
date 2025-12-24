@@ -15,7 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -25,6 +26,9 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
     private final com.example.rental.service.TenantService tenantService;
+
+    @Value("${app.frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
 
     @Operation(summary = "Tạo hóa đơn mới")
     @PostMapping
@@ -99,7 +103,7 @@ public class InvoiceController {
     @Operation(summary = "Thanh toán hóa đơn (trực tiếp hoặc online)")
     @PostMapping("/{id}/pay")
     @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','ACCOUNTANT') or hasRole('TENANT')")
-    public ResponseEntity<ApiResponseDto<InvoiceResponse>> payInvoice(
+        public ResponseEntity<ApiResponseDto<Object>> payInvoice(
             @PathVariable Long id,
             @RequestParam(defaultValue = "true") boolean direct
     ) {
@@ -110,8 +114,23 @@ public class InvoiceController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponseDto.error(HttpStatus.FORBIDDEN.value(), "Kế toán chỉ được xác nhận thu tiền mặt", null));
         }
-        InvoiceResponse resp = invoiceService.markPaid(id, direct);
-        return ResponseEntity.ok(ApiResponseDto.success(200, "Invoice paid", resp));
+
+        if (direct) {
+            InvoiceResponse resp = invoiceService.markPaid(id, true);
+            return ResponseEntity.ok(ApiResponseDto.success(200, "Invoice paid", (Object) resp));
+        }
+
+        // Online payment (MoMo): return checkout URL; invoice will be marked PAID via IPN.
+        String feInvoicesUrl = (frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl)
+            + "/tenant/invoices";
+        String redirectUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+            .path("/api/momo/return")
+            .queryParam("returnUrl", feInvoicesUrl)
+            .build()
+            .toUriString();
+
+        var momo = invoiceService.initiateMomoPayment(id, redirectUrl);
+        return ResponseEntity.ok(ApiResponseDto.success(200, "MoMo initiated", (Object) momo));
     }
 
     @Operation(summary = "Lấy hóa đơn của người dùng đang đăng nhập (Tenant)")

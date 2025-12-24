@@ -46,6 +46,7 @@ public class SecurityConfig {
 
                                 // --- MoMo IPN callback (public) ---
                                 "/api/momo/ipn-handler",
+                                "/api/momo/return",
 
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

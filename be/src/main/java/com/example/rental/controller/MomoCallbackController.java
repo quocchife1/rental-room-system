@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +23,52 @@ import java.util.Map;
 public class MomoCallbackController {
 
     private final MomoService momoService;
+
+    @Value("${app.frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
+
+    @GetMapping("/return")
+    public ResponseEntity<ApiResponseDto<java.util.Map<String, String>>> momoReturn(
+            @RequestParam String orderId,
+            @RequestParam(required = false) String returnUrl
+    ) {
+        boolean ok = false;
+        try {
+            ok = momoService.handleMomoReturn(orderId);
+        } catch (Exception ex) {
+            log.error("MoMo return handling failed", ex);
+            ok = false;
+        }
+
+        String feBase = (frontendBaseUrl == null || frontendBaseUrl.isBlank()) ? "http://localhost:3000" : frontendBaseUrl;
+        String target;
+        if (returnUrl == null || returnUrl.isBlank()) {
+            target = feBase;
+        } else if (returnUrl.startsWith("/")) {
+            target = feBase + returnUrl;
+        } else if (returnUrl.startsWith(feBase)) {
+            target = returnUrl;
+        } else {
+            // prevent open redirect to untrusted domains
+            target = feBase;
+        }
+
+        try {
+            java.net.URI uri = org.springframework.web.util.UriComponentsBuilder
+                    .fromUriString(target)
+                    .queryParam("momo", ok ? "success" : "failed")
+                    .queryParam("orderId", orderId)
+                    .build()
+                    .toUri();
+
+            return ResponseEntity.status(302)
+                    .location(uri)
+                    .body(ApiResponseDto.success(302, "Redirecting", java.util.Collections.singletonMap("location", uri.toString())));
+        } catch (Exception e) {
+            // Fallback: return JSON only
+            return ResponseEntity.ok(ApiResponseDto.success(200, ok ? "OK" : "FAILED", java.util.Collections.singletonMap("orderId", orderId)));
+        }
+    }
 
     @PostMapping(path = "/ipn-handler", consumes = { MediaType.APPLICATION_JSON_VALUE,
             MediaType.APPLICATION_FORM_URLENCODED_VALUE })

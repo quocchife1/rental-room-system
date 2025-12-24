@@ -1,19 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import partnerApi from '../../api/partnerApi';
 import resolveImageUrl from '../../utils/resolveImageUrl';
 
 export default function MyListings() {
+  const location = useLocation();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [payingId, setPayingId] = useState(null);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
+  const momoResult = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('momo');
+  }, [location.search]);
+
   useEffect(() => {
     fetchListings(page, size);
   }, [page, size]);
+
+  useEffect(() => {
+    if (momoResult === 'success') {
+      alert('Thanh toán MoMo thành công. Đang cập nhật trạng thái tin đăng...');
+      fetchListings(page, size);
+    }
+    if (momoResult === 'failed') {
+      alert('Thanh toán MoMo thất bại hoặc bị hủy.');
+      fetchListings(page, size);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [momoResult]);
 
   const fetchListings = async (pageParam = 0, sizeParam = 10) => {
     try {
@@ -101,13 +120,26 @@ export default function MyListings() {
   // Helper để lấy ảnh đầu tiên hoặc ảnh placeholder
   const getThumbnail = (item) => {
     // API có thể trả về imageUrls (List<String>) hoặc images (List<Object>)
-    if (item.imageUrls && item.imageUrls.length > 0) return `http://localhost:8080${item.imageUrls[0]}`;
-    if (item.images && item.images.length > 0) return `http://localhost:8080${item.images[0].imageUrl || item.images[0]}`;
+    if (item.imageUrls && item.imageUrls.length > 0) return resolveImageUrl(item.imageUrls[0]);
+    if (item.images && item.images.length > 0) return resolveImageUrl(item.images[0].imageUrl || item.images[0]);
     return 'https://placehold.co/100?text=NoImage';
-      // API có thể trả về imageUrls (List<String>) hoặc images (List<Object>)
-      if (item.imageUrls && item.imageUrls.length > 0) return resolveImageUrl(item.imageUrls[0]);
-      if (item.images && item.images.length > 0) return resolveImageUrl(item.images[0].imageUrl || item.images[0]);
-      return 'https://placehold.co/100?text=NoImage';
+  };
+
+  const handlePayNow = async (postId) => {
+    try {
+      setPayingId(postId);
+      const payment = await partnerApi.initiatePostMomoPayment(postId);
+      const payUrl = payment?.payUrl || payment?.paymentUrl;
+      if (!payUrl) {
+        alert('Không lấy được link thanh toán MoMo.');
+        return;
+      }
+      window.location.href = payUrl;
+    } catch (err) {
+      alert('Lỗi tạo link thanh toán: ' + (err.response?.data?.message || err.message || 'Lỗi server'));
+    } finally {
+      setPayingId(null);
+    }
   };
 
   if (loading) return <div className="p-10 text-center text-gray-500">Đang tải dữ liệu...</div>;
@@ -160,15 +192,15 @@ export default function MyListings() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     {getStatusBadge(item.status)}
-                    {item.status === 'PENDING_PAYMENT' && item.paymentUrl && (
-                      <a
-                        href={item.paymentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-block text-indigo-600 font-bold hover:underline"
+                    {item.status === 'PENDING_PAYMENT' && (
+                      <button
+                        type="button"
+                        onClick={() => handlePayNow(item.id)}
+                        disabled={payingId === item.id}
+                        className="mt-2 inline-block text-indigo-600 font-bold hover:underline disabled:opacity-50"
                       >
-                        Thanh toán ngay →
-                      </a>
+                        {payingId === item.id ? 'Đang tạo link...' : 'Thanh toán ngay →'}
+                      </button>
                     )}
                     {item.status === 'REJECTED' && item.rejectReason && (
                       <div className="mt-2 text-xs text-left bg-red-50 border border-red-100 text-red-700 rounded-lg px-3 py-2 inline-block max-w-xs">

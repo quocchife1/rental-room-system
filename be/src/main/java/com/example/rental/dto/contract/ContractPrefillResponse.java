@@ -21,6 +21,7 @@ public class ContractPrefillResponse {
     private String studentId;
     private String university;
 
+    private BigDecimal roomPrice;
     private BigDecimal deposit;
     private LocalDate startDate;
 }

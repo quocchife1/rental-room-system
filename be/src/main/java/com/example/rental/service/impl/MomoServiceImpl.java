@@ -3,17 +3,20 @@ package com.example.rental.service.impl;
 import com.example.rental.exception.SignatureVerificationException;
 import com.example.rental.service.MomoClientService;
 import com.example.rental.service.MomoService;
-import com.example.rental.service.PartnerPostService;
 import com.example.rental.entity.PostApprovalStatus;
 import com.example.rental.entity.PartnerPost;
 import com.example.rental.dto.momo.CreateMomoResponse;
 import com.example.rental.dto.momo.CreateMomoRequest;
+import com.example.rental.dto.momo.QueryMomoRequest;
+import com.example.rental.dto.momo.QueryMomoResponse;
 import com.example.rental.repository.PartnerPostRepository;
 import com.example.rental.repository.PartnerPaymentRepository;
 import com.example.rental.repository.ContractRepository;
 import com.example.rental.repository.ContractServiceRepository;
 import com.example.rental.repository.RentalServiceRepository;
 import com.example.rental.repository.RoomRepository;
+import com.example.rental.repository.InvoiceRepository;
+import com.example.rental.repository.PaymentRepository;
 import com.example.rental.entity.PartnerPayment;
 import com.example.rental.entity.PaymentMethod;
 import com.example.rental.entity.ContractStatus;
@@ -35,7 +38,6 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -66,6 +68,8 @@ public class MomoServiceImpl implements MomoService {
     private final RoomRepository roomRepository;
         private final ContractServiceRepository contractServiceRepository;
         private final RentalServiceRepository rentalServiceRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentRepository paymentRepository;
     private final DepositDocxGenerator depositDocxGenerator;
     private final AuditLogService auditLogService;
 
@@ -130,11 +134,18 @@ public class MomoServiceImpl implements MomoService {
 
     private static final String EXTRA_CONTRACT_DEPOSIT_PREFIX = "CONTRACT_DEPOSIT:";
     private static final String ORDER_CONTRACT_DEPOSIT_PREFIX = "DEP-";
+    private static final String EXTRA_INVOICE_PREFIX = "INVOICE:";
+    private static final String ORDER_INVOICE_PREFIX = "INV-";
+    private static final String ORDER_PARTNER_POST_PREFIX = "POST-";
 
     @Override
     public CreateMomoResponse createATMPayment(long amount, String orderId) {
 
-        return createATMPayment(amount, orderId, "Thanh toan bai dang", REDIRECT_URL, "");
+        // Locked to prevent using redirectUrl configs that contain hash fragments ("#")
+        // which are not sent to the server and can break return verification.
+        throw new UnsupportedOperationException(
+                "Partner-post MoMo default initiation is locked. Use createATMPayment(amount, orderId, orderInfo, redirectUrl, extraData)."
+        );
     }
 
     @Override
@@ -178,6 +189,234 @@ public class MomoServiceImpl implements MomoService {
                 .build();
 
         return momoClientService.createATMPayment(request);
+    }
+
+    @Override
+    public QueryMomoResponse queryTransaction(String orderId) {
+        if (orderId == null || orderId.isBlank()) {
+            throw new IllegalArgumentException("Missing orderId");
+        }
+
+        // Many MoMo integrations use requestId = orderId for query.
+        String requestId = orderId;
+
+        String rawSignature = String.format(
+                "accessKey=%s&orderId=%s&partnerCode=%s&requestId=%s",
+                ACCESS_KEY,
+                orderId,
+                PARTNER_CODE,
+                requestId
+        );
+
+        final String signature;
+        try {
+            signature = signHmacSHA256(rawSignature, SECRET_KEY);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to sign query request", e);
+        }
+
+        QueryMomoRequest req = QueryMomoRequest.builder()
+                .partnerCode(PARTNER_CODE)
+                .orderId(orderId)
+                .requestId(requestId)
+                .lang("vi")
+                .signature(signature)
+                .build();
+
+        return momoClientService.queryTransaction(req);
+    }
+
+    @Override
+    public boolean handleMomoReturn(String orderId) {
+        if (orderId == null || orderId.isBlank()) return false;
+
+        if (orderId.startsWith(ORDER_INVOICE_PREFIX)) {
+            return handleMomoReturnForInvoice(orderId);
+        }
+
+        if (orderId.startsWith(ORDER_CONTRACT_DEPOSIT_PREFIX)) {
+            return handleMomoReturnForContractDeposit(orderId);
+        }
+
+        if (orderId.startsWith(ORDER_PARTNER_POST_PREFIX)) {
+            return handleMomoReturnForPartnerPost(orderId);
+        }
+
+        // Backward compatibility: partner posts previously used random UUID orderIds
+        try {
+            if (partnerPostRepository != null && partnerPostRepository.findByOrderId(orderId).isPresent()) {
+                return handleMomoReturnForPartnerPost(orderId);
+            }
+        } catch (Exception ignored) {
+        }
+
+        return false;
+    }
+
+    private boolean handleMomoReturnForPartnerPost(String orderId) {
+        if (orderId == null || orderId.isBlank()) return false;
+
+        PartnerPost post;
+        try {
+            post = partnerPostRepository.findByOrderId(orderId).orElse(null);
+        } catch (Exception e) {
+            post = null;
+        }
+        if (post == null) return false;
+
+        // If already moved past payment stage, treat as success.
+        try {
+            if (post.getStatus() != null && post.getStatus() != PostApprovalStatus.PENDING_PAYMENT) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+
+        QueryMomoResponse q = queryTransaction(orderId);
+        if (q == null) return false;
+
+        if (q.getResultCode() != 0) {
+            try {
+                post.setStatus(PostApprovalStatus.PENDING_PAYMENT);
+                partnerPostRepository.save(post);
+            } catch (Exception ignored) {
+            }
+            return false;
+        }
+
+        // Success: mark post ready for approval and record payment (idempotent by paymentCode)
+        try {
+            post.setStatus(PostApprovalStatus.PENDING_APPROVAL);
+            partnerPostRepository.save(post);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            String transId = q.getTransId();
+            if (transId != null && !transId.isBlank() && !partnerPaymentRepository.existsByPaymentCode(transId)) {
+                PartnerPayment payment = PartnerPayment.builder()
+                        .paymentCode(transId)
+                        .partner(post.getPartner())
+                        .post(post)
+                        .amount(java.math.BigDecimal.valueOf(q.getAmount()))
+                        .method(PaymentMethod.MOMO)
+                        .build();
+                partnerPaymentRepository.save(payment);
+            }
+        } catch (Exception ignored) {
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean handleMomoReturnForInvoice(String orderId) {
+        if (orderId == null || orderId.isBlank()) return false;
+
+        // Determine invoiceId from orderId: INV-<invoiceId>-...
+        Long invoiceId = null;
+        if (orderId.startsWith(ORDER_INVOICE_PREFIX)) {
+            try {
+                String[] parts = orderId.split("-");
+                if (parts.length >= 2) {
+                    invoiceId = Long.parseLong(parts[1]);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (invoiceId == null) {
+            return false;
+        }
+
+        final Long invId = invoiceId;
+
+        try {
+            // If already PAID, consider success.
+            var invOpt = invoiceRepository.findById(invId);
+            if (invOpt.isPresent() && invOpt.get().getStatus() == com.example.rental.entity.InvoiceStatus.PAID) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+
+        QueryMomoResponse q = queryTransaction(orderId);
+        if (q == null) return false;
+
+        boolean ok = q.getResultCode() == 0;
+        if (!ok) {
+            return false;
+        }
+
+        markInvoicePaid(invId, q.getTransId(), orderId);
+
+        // Best-effort: store payment reference (transId) and update Payment record.
+        try {
+            var invOpt = invoiceRepository.findById(invId);
+            if (invOpt.isPresent()) {
+                var inv = invOpt.get();
+                if (inv.getPaymentReference() == null || inv.getPaymentReference().isBlank()) {
+                    inv.setPaymentReference(q.getTransId());
+                    invoiceRepository.save(inv);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            paymentRepository.findAll().stream()
+                    .filter(p -> (p.getProviderRef() != null && p.getProviderRef().equals(orderId))
+                        || (p.getInvoiceId() != null && p.getInvoiceId().equals(invId)))
+                    .findFirst()
+                    .ifPresent(p -> {
+                        p.setStatus("SUCCESS");
+                        paymentRepository.save(p);
+                    });
+        } catch (Exception ignored) {
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean handleMomoReturnForContractDeposit(String orderId) {
+        if (orderId == null || orderId.isBlank()) return false;
+
+        // Determine contractId from orderId: DEP-<contractId>-...
+        Long contractId = null;
+        if (orderId.startsWith(ORDER_CONTRACT_DEPOSIT_PREFIX)) {
+            try {
+                String[] parts = orderId.split("-");
+                if (parts.length >= 2) {
+                    contractId = Long.parseLong(parts[1]);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (contractId == null) return false;
+
+        final Long cId = contractId;
+
+        try {
+            var cOpt = contractRepository.findById(cId);
+            if (cOpt.isPresent()) {
+                var c = cOpt.get();
+                // If already ACTIVE (deposit paid), consider success.
+                if (c.getStatus() == ContractStatus.ACTIVE) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        QueryMomoResponse q = queryTransaction(orderId);
+        if (q == null) return false;
+        if (q.getResultCode() != 0) return false;
+
+        // Reuse existing deposit-success logic (docs + activate contract)
+        handleContractDepositSuccess(cId, q.getAmount(), q.getTransId(), orderId);
+        return true;
     }
 
     @Override
@@ -242,6 +481,9 @@ public class MomoServiceImpl implements MomoService {
             // --- Contract deposit callback routing ---
             Long contractId = null;
 
+            // --- Invoice callback routing ---
+            Long invoiceId = null;
+
             // 1) Try decode extraData (MoMo convention is Base64)
             String extraDecoded = null;
             if (extraData != null && !extraData.isBlank()) {
@@ -253,6 +495,13 @@ public class MomoServiceImpl implements MomoService {
                 }
             }
 
+            if (extraDecoded != null && extraDecoded.startsWith(EXTRA_INVOICE_PREFIX)) {
+                try {
+                    invoiceId = Long.parseLong(extraDecoded.substring(EXTRA_INVOICE_PREFIX.length()).trim());
+                } catch (Exception ignored) {
+                }
+            }
+
             if (extraDecoded != null && extraDecoded.startsWith(EXTRA_CONTRACT_DEPOSIT_PREFIX)) {
                 try {
                     contractId = Long.parseLong(extraDecoded.substring(EXTRA_CONTRACT_DEPOSIT_PREFIX.length()).trim());
@@ -261,6 +510,12 @@ public class MomoServiceImpl implements MomoService {
             }
 
             // 2) Fallback: raw extraData (if it was not Base64)
+            if (invoiceId == null && extraData != null && extraData.startsWith(EXTRA_INVOICE_PREFIX)) {
+                try {
+                    invoiceId = Long.parseLong(extraData.substring(EXTRA_INVOICE_PREFIX.length()).trim());
+                } catch (Exception ignored) {
+                }
+            }
             if (contractId == null && extraData != null && extraData.startsWith(EXTRA_CONTRACT_DEPOSIT_PREFIX)) {
                 try {
                     contractId = Long.parseLong(extraData.substring(EXTRA_CONTRACT_DEPOSIT_PREFIX.length()).trim());
@@ -269,6 +524,15 @@ public class MomoServiceImpl implements MomoService {
             }
 
             // 3) Fallback: parse from orderId format DEP-{contractId}-...
+            if (invoiceId == null && orderId != null && orderId.startsWith(ORDER_INVOICE_PREFIX)) {
+                try {
+                    String[] parts = orderId.split("-");
+                    if (parts.length >= 2) {
+                        invoiceId = Long.parseLong(parts[1]);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
             if (contractId == null && orderId != null && orderId.startsWith(ORDER_CONTRACT_DEPOSIT_PREFIX)) {
                 try {
                     String[] parts = orderId.split("-");
@@ -277,6 +541,46 @@ public class MomoServiceImpl implements MomoService {
                     }
                 } catch (Exception ignored) {
                 }
+            }
+
+            if (invoiceId != null) {
+                final Long invId = invoiceId;
+                final String ordId = orderId;
+                if ("0".equals(resultCode)) {
+                    handleInvoicePaymentSuccess(invId, amountLong, transId, ordId);
+                } else {
+                    log.info("Invoice payment FAILED for invoiceId={}, resultCode={}", invId, resultCode);
+                    try {
+                        paymentRepository.findAll().stream()
+                                .filter(p -> (p.getProviderRef() != null && p.getProviderRef().equals(ordId))
+                                        || (p.getInvoiceId() != null && p.getInvoiceId().equals(invId)))
+                                .findFirst()
+                                .ifPresent(p -> {
+                                    p.setStatus("FAILED");
+                                    paymentRepository.save(p);
+                                });
+                    } catch (Exception ignored) {
+                    }
+                    try {
+                        auditLogService.logAction(
+                                "SYSTEM",
+                                "SYSTEM",
+                                AuditAction.CONFIRM_PAYMENT,
+                                "INVOICE",
+                                invId,
+                                "MoMo IPN - invoice payment failed",
+                                null,
+                                "{\"orderId\":\"" + ordId + "\",\"transId\":\"" + transId + "\",\"resultCode\":\"" + resultCode + "\"}",
+                                "momo-ipn",
+                                null,
+                                "momo-ipn",
+                                "FAILURE",
+                                null
+                        );
+                    } catch (Exception ignored) {
+                    }
+                }
+                return;
             }
 
             if (contractId != null) {
@@ -316,15 +620,19 @@ public class MomoServiceImpl implements MomoService {
                 partnerPostRepository.save(post);
 
                 // Tạo bản ghi PartnerPayment
-                PartnerPayment payment = PartnerPayment.builder()
-                        .paymentCode(transId) // Dùng transId từ MoMo làm mã thanh toán
-                        .partner(post.getPartner())
-                        .post(post)
-                        .amount(BigDecimal.valueOf(amountLong))
-                        .method(PaymentMethod.MOMO)
-                        .build();
-                partnerPaymentRepository.save(payment);
-                log.info("Đã lưu thông tin thanh toán cho orderId: {}, transId: {}", orderId, transId);
+                if (transId != null && !transId.isBlank() && !partnerPaymentRepository.existsByPaymentCode(transId)) {
+                    PartnerPayment payment = PartnerPayment.builder()
+                            .paymentCode(transId) // Dùng transId từ MoMo làm mã thanh toán
+                            .partner(post.getPartner())
+                            .post(post)
+                            .amount(BigDecimal.valueOf(amountLong))
+                            .method(PaymentMethod.MOMO)
+                            .build();
+                    partnerPaymentRepository.save(payment);
+                    log.info("Đã lưu thông tin thanh toán cho orderId: {}, transId: {}", orderId, transId);
+                } else {
+                    log.info("Bo qua luu PartnerPayment do trung paymentCode/transId: {}", transId);
+                }
             } else {
                 log.info("Thanh toan THAT BAI cho orderId: {}. Ma loi: {}. Cap nhat trang thai...", orderId,
                         resultCode);
@@ -401,6 +709,81 @@ public class MomoServiceImpl implements MomoService {
             }
         } catch (Exception e) {
             log.error("Failed to activate contract after MoMo deposit payment. contractId={}", contractId, e);
+        }
+    }
+
+    private void handleInvoicePaymentSuccess(Long invoiceId, long amountLong, String transId, String orderId) {
+        markInvoicePaid(invoiceId, transId, orderId);
+
+        // Best-effort update payment record
+        try {
+            paymentRepository.findAll().stream()
+                    .filter(p -> (p.getProviderRef() != null && p.getProviderRef().equals(orderId))
+                            || (p.getInvoiceId() != null && p.getInvoiceId().equals(invoiceId)))
+                    .findFirst()
+                    .ifPresent(p -> {
+                        p.setStatus("SUCCESS");
+                        paymentRepository.save(p);
+                    });
+        } catch (Exception ignored) {
+        }
+
+        try {
+            auditLogService.logAction(
+                    "SYSTEM",
+                    "SYSTEM",
+                    AuditAction.CONFIRM_PAYMENT,
+                    "INVOICE",
+                    invoiceId,
+                    "MoMo IPN - invoice payment confirmed",
+                    null,
+                    "{\"orderId\":\"" + orderId + "\",\"transId\":\"" + transId + "\",\"amount\":" + amountLong + "}",
+                    "momo-ipn",
+                    null,
+                    "momo-ipn",
+                    "SUCCESS",
+                    null
+            );
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void markInvoicePaid(Long invoiceId, String transId, String orderId) {
+        if (invoiceId == null) return;
+
+        try {
+            var invOpt = invoiceRepository.findById(invoiceId);
+            if (invOpt.isEmpty()) {
+                log.warn("Invoice not found for MoMo confirmation: invoiceId={}", invoiceId);
+                return;
+            }
+
+            var inv = invOpt.get();
+            if (inv.getStatus() == com.example.rental.entity.InvoiceStatus.PAID) {
+                return;
+            }
+
+            inv.setStatus(com.example.rental.entity.InvoiceStatus.PAID);
+            inv.setPaidDate(java.time.LocalDate.now());
+            inv.setPaidDirect(Boolean.FALSE);
+            String ref = (transId != null && !transId.isBlank()) ? transId : orderId;
+            inv.setPaymentReference(ref);
+            invoiceRepository.save(inv);
+        } catch (Exception e) {
+            log.error("Failed to mark invoice paid. invoiceId={}, orderId={}", invoiceId, orderId, e);
+        }
+
+        // Best-effort update payment record
+        try {
+            paymentRepository.findAll().stream()
+                    .filter(p -> (p.getProviderRef() != null && p.getProviderRef().equals(orderId))
+                            || (p.getInvoiceId() != null && p.getInvoiceId().equals(invoiceId)))
+                    .findFirst()
+                    .ifPresent(p -> {
+                        p.setStatus("SUCCESS");
+                        paymentRepository.save(p);
+                    });
+        } catch (Exception ignored) {
         }
     }
 

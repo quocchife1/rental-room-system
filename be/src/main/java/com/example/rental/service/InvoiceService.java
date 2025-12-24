@@ -1,6 +1,7 @@
 package com.example.rental.service;
 
 import com.example.rental.dto.invoice.InvoiceRequest;
+import com.example.rental.dto.invoice.InvoiceMomoInitiateResponse;
 import com.example.rental.dto.invoice.InvoiceResponse;
 import com.example.rental.entity.InvoiceStatus;
 import org.springframework.data.domain.Page;
@@ -35,4 +36,10 @@ public interface InvoiceService {
      * Tạo hóa đơn phát sinh (không bị ràng buộc 1 hóa đơn/tháng) – dùng cho các trường hợp như bảo trì do lỗi người thuê.
      */
     InvoiceResponse createMaintenanceInvoice(Long contractId, java.time.LocalDate dueDate, java.math.BigDecimal amount, String note);
+
+    /**
+     * Khởi tạo thanh toán MoMo cho hóa đơn (trả về payUrl + orderId).
+     * Việc xác nhận "đã thanh toán" sẽ được cập nhật qua IPN (server-to-server).
+     */
+    InvoiceMomoInitiateResponse initiateMomoPayment(Long invoiceId, String redirectUrl);
 }

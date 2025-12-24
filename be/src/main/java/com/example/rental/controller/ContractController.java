@@ -8,6 +8,7 @@ import com.example.rental.dto.contract.DepositMomoInitiateRequest;
 import com.example.rental.dto.contract.DepositMomoInitiateResponse;
 import com.example.rental.dto.contract.ContractResponse;
 import com.example.rental.mapper.ContractMapper;
+import com.example.rental.repository.ContractRepository;
 import com.example.rental.service.ContractService;
 import com.example.rental.service.MomoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,12 +39,14 @@ import java.util.Base64;
 @Tag(name = "Contract Management", description = "Quản lý hợp đồng thuê phòng")
 public class ContractController {
 
+    private static final java.math.BigDecimal FIXED_DEPOSIT_AMOUNT = java.math.BigDecimal.valueOf(1_000_000);
+
     private final ContractService contractService;
     private final ContractMapper contractMapper;
     private final MomoService momoService;
+    private final ContractRepository contractRepository;
     private final com.example.rental.service.TenantService tenantService;
     private final com.example.rental.service.CheckoutService checkoutService;
-    private final com.example.rental.service.InvoiceService invoiceService;
 
     @Value("${app.frontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
@@ -147,26 +150,56 @@ public class ContractController {
 
     @Operation(summary = "Khởi tạo thanh toán MoMo tiền cọc (trả về payUrl)")
     @PostMapping("/{id}/deposit/momo/initiate")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST','ACCOUNTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST','ACCOUNTANT') or hasRole('TENANT')")
     public ResponseEntity<ApiResponseDto<DepositMomoInitiateResponse>> initiateDepositMomo(
             @PathVariable Long id,
             @RequestBody(required = false) DepositMomoInitiateRequest request) {
 
-        var contract = contractService.getContractForStaff(id);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : null;
+        boolean isTenant = auth != null && auth.getAuthorities() != null
+                && auth.getAuthorities().stream().anyMatch(a -> "ROLE_TENANT".equals(a.getAuthority()));
+
+        com.example.rental.entity.Contract contract;
+        if (isTenant) {
+            if (username == null || username.isBlank()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponseDto.error(HttpStatus.UNAUTHORIZED.value(), "Chưa đăng nhập", "UNAUTHORIZED", null));
+            }
+            contract = contractRepository.findByIdAndTenant_Username(id, username)
+                    .orElse(null);
+            if (contract == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponseDto.error(HttpStatus.FORBIDDEN.value(), "Không có quyền truy cập hợp đồng này", "FORBIDDEN", null));
+            }
+        } else {
+            contract = contractService.getContractForStaff(id);
+        }
+
         if (contract.getStatus() == null || contract.getStatus() != com.example.rental.entity.ContractStatus.SIGNED_PENDING_DEPOSIT) {
             return ResponseEntity.badRequest().body(ApiResponseDto.error(400, "Hợp đồng chưa ở trạng thái chờ thanh toán tiền cọc.", "INVALID_STATUS", null));
         }
 
-        java.math.BigDecimal amount = request != null ? request.getAmount() : null;
-        if (amount == null) amount = contract.getDeposit();
-        if (amount == null) amount = java.math.BigDecimal.ZERO;
+        // Enforce fixed deposit (ignore client-provided amount)
+        if (contract.getDeposit() == null || contract.getDeposit().compareTo(FIXED_DEPOSIT_AMOUNT) != 0) {
+            contract.setDeposit(FIXED_DEPOSIT_AMOUNT);
+            contractRepository.save(contract);
+        }
+        java.math.BigDecimal amount = FIXED_DEPOSIT_AMOUNT;
 
-        // Build return URL (best-effort)
+        // Build frontend return URL (best-effort)
         String returnPath = request != null ? request.getReturnPath() : null;
         if (returnPath == null || returnPath.isBlank() || !returnPath.startsWith("/")) {
-            returnPath = "/staff/contracts";
+            returnPath = isTenant ? "/tenant/contracts" : "/staff/contracts";
         }
-        String redirectUrl = (frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl) + returnPath;
+        String feReturnUrl = (frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl) + returnPath;
+
+        // Redirect MoMo -> backend return handler (no-ngrok friendly)
+        String redirectUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/momo/return")
+                .queryParam("returnUrl", feReturnUrl)
+            .build()
+                .toUriString();
 
         String orderId = "DEP-" + id + "-" + UUID.randomUUID();
         String orderInfo = "Thanh toan tien coc hop dong #" + id;

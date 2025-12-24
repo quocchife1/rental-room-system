@@ -19,6 +19,8 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
 
     org.springframework.data.domain.Page<Contract> findByTenantId(Long tenantId, Pageable pageable);
 
+    java.util.Optional<Contract> findByIdAndTenant_Username(Long id, String username);
+
     // Tìm kiếm hợp đồng theo ID phòng
     Contract findByRoomIdAndStatus(Long roomId, ContractStatus status);
 

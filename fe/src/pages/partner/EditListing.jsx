@@ -94,14 +94,21 @@ export default function EditListing() {
 
       const res = await partnerApi.updatePost(id, payload, images);
       const responseData = res?.data?.data || res?.data || res;
-      const paymentUrl = responseData?.paymentUrl;
       const postTypeChanged = originalPostType && originalPostType !== formData.postType;
 
-      if (postTypeChanged && paymentUrl) {
-        alert('Đổi gói tin thành công. Đang chuyển đến trang thanh toán MoMo.');
-        imagePreviews.forEach(url => URL.revokeObjectURL(url));
-        window.location.href = paymentUrl;
-        return;
+      if (postTypeChanged) {
+        try {
+          const payment = await partnerApi.initiatePostMomoPayment(id);
+          const payUrl = payment?.payUrl || payment?.paymentUrl;
+          if (payUrl) {
+            alert('Đổi gói tin thành công. Đang chuyển đến trang thanh toán MoMo.');
+            imagePreviews.forEach(url => URL.revokeObjectURL(url));
+            window.location.href = payUrl;
+            return;
+          }
+        } catch (e) {
+          // If backend says no payment needed / not pending, just continue
+        }
       }
 
       alert('Cập nhật tin thành công!');

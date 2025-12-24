@@ -21,6 +21,7 @@ public class ContractResponse {
     private String branchCode;
     private LocalDate startDate;
     private LocalDate endDate;
+    private BigDecimal roomPrice;
     private BigDecimal deposit;
     private String status;
     private LocalDateTime createdAt;

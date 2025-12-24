@@ -7,6 +7,7 @@ import com.example.rental.repository.*;
 import com.example.rental.security.Audited;
 import com.example.rental.service.EmailService;
 import com.example.rental.service.InvoiceService;
+import com.example.rental.service.MomoService;
 import com.example.rental.utils.InvoiceEmailTemplateUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +37,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final DamageReportRepository damageReportRepository;
     private final CheckoutRequestRepository checkoutRequestRepository;
     private final EmployeeRepository employeeRepository;
+    private final MomoService momoService;
+    private final PaymentRepository paymentRepository;
 
     // Matches DECIMAL(12,2) columns (max: 9,999,999,999.99)
     private static final BigDecimal MAX_MONEY_DECIMAL_12_2 = new BigDecimal("9999999999.99");
@@ -737,6 +742,63 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         return InvoiceMapper.toResponse(savedInvoice);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceMomoInitiateResponse initiateMomoPayment(Long invoiceId, String redirectUrl) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn"));
+        assertTenantOwnsInvoiceIfTenant(invoice);
+        assertManagerInSameBranchIfManager(invoice);
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            return InvoiceMomoInitiateResponse.builder()
+                    .payUrl(null)
+                    .orderId(null)
+                    .build();
+        }
+
+        BigDecimal amount = invoice.getAmount() != null ? invoice.getAmount() : BigDecimal.ZERO;
+        if (amount.signum() <= 0) {
+            throw new IllegalArgumentException("Số tiền hóa đơn không hợp lệ");
+        }
+
+        long momoAmount = amount.setScale(0, RoundingMode.HALF_UP).longValue();
+        String orderId = "INV-" + invoiceId + "-" + UUID.randomUUID();
+        String orderInfo = "Thanh toan hoa don #" + invoiceId;
+        String extraPlain = "INVOICE:" + invoiceId;
+        String extraData = Base64.getEncoder().encodeToString(extraPlain.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        var momoResp = momoService.createATMPayment(momoAmount, orderId, orderInfo, redirectUrl, extraData);
+        if (momoResp == null || momoResp.getPayUrl() == null || momoResp.getPayUrl().isBlank()) {
+            throw new RuntimeException("Không thể khởi tạo thanh toán MoMo");
+        }
+
+        try {
+            String actor = null;
+            try {
+                actor = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            } catch (Exception ignored) {
+            }
+
+            Payment payment = Payment.builder()
+                    .invoiceId(invoiceId)
+                    .amount(amount)
+                    .method("MOMO")
+                    .providerRef(orderId)
+                    .status("PENDING")
+                    .processedBy(actor)
+                    .build();
+            paymentRepository.save(payment);
+        } catch (Exception ignored) {
+            // best-effort; do not block checkout URL
+        }
+
+        return InvoiceMomoInitiateResponse.builder()
+                .payUrl(momoResp.getPayUrl())
+                .orderId(orderId)
+                .build();
     }
 
     @Override

@@ -11,6 +11,8 @@ export default function ContractCreation(){
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
+  const FIXED_DEPOSIT = 1000000;
+
   const reservationId = useMemo(() => {
     const sp = new URLSearchParams(location.search);
     const raw = sp.get('reservationId');
@@ -30,7 +32,7 @@ export default function ContractCreation(){
     branchCode:'', roomNumber:'',
     tenantId: null,
     tenantFullName:'', tenantPhoneNumber:'', tenantEmail:'', tenantAddress:'',
-    tenantCccd:'', studentId:'', university:'', deposit:'', startDate:'', endDate:''
+    tenantCccd:'', studentId:'', university:'', roomPrice:'', deposit:'', startDate:'', endDate:''
   });
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState(null); // ContractResponse
@@ -89,6 +91,13 @@ export default function ContractCreation(){
   }, [fixedBranchCode]);
 
   useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      deposit: String(FIXED_DEPOSIT),
+    }));
+  }, []);
+
+  useEffect(() => {
     if (!reservationId) return;
     if (contractId) return;
     const loadPrefill = async () => {
@@ -109,7 +118,8 @@ export default function ContractCreation(){
           tenantCccd: data.tenantCccd || prev.tenantCccd,
           studentId: data.studentId || prev.studentId,
           university: data.university || prev.university,
-          deposit: (data.deposit ?? prev.deposit) !== null ? String(data.deposit ?? prev.deposit ?? '') : prev.deposit,
+          roomPrice: (data.roomPrice ?? prev.roomPrice) !== null ? String(data.roomPrice ?? prev.roomPrice ?? '') : prev.roomPrice,
+          deposit: String(FIXED_DEPOSIT),
           startDate: data.startDate || prev.startDate,
           endDate: data.endDate || prev.endDate,
         }));
@@ -141,7 +151,7 @@ export default function ContractCreation(){
     if (created?.status !== 'SIGNED_PENDING_DEPOSIT') return;
     setDepositForm((prev) => ({
       ...prev,
-      amount: prev.amount || (created?.deposit != null ? String(created.deposit) : ''),
+      amount: String(FIXED_DEPOSIT),
     }));
   }, [created?.status, created?.deposit]);
 
@@ -166,7 +176,8 @@ export default function ContractCreation(){
             tenantCccd: data.tenantCccd || prev.tenantCccd,
             studentId: data.studentId || prev.studentId,
             university: data.university || prev.university,
-            deposit: (data.deposit ?? prev.deposit) !== null ? String(data.deposit ?? prev.deposit ?? '') : prev.deposit,
+            roomPrice: (data.roomPrice ?? prev.roomPrice) !== null ? String(data.roomPrice ?? prev.roomPrice ?? '') : prev.roomPrice,
+            deposit: String(FIXED_DEPOSIT),
             startDate: data.startDate || prev.startDate,
             endDate: data.endDate || prev.endDate,
           }));
@@ -221,7 +232,7 @@ export default function ContractCreation(){
         tenantCccd: form.tenantCccd,
         studentId: form.studentId,
         university: form.university,
-        deposit: form.deposit ? Number(form.deposit) : 0,
+        deposit: FIXED_DEPOSIT,
         startDate: form.startDate || null,
         endDate: form.endDate || null,
       };
@@ -280,7 +291,7 @@ export default function ContractCreation(){
         tenantCccd: form.tenantCccd,
         studentId: form.studentId,
         university: form.university,
-        deposit: form.deposit ? Number(form.deposit) : 0,
+        deposit: FIXED_DEPOSIT,
         startDate: form.startDate || null,
         endDate: form.endDate || null
       };
@@ -396,7 +407,7 @@ export default function ContractCreation(){
 
     const payload = {
       method: depositForm.method,
-      amount: String(depositForm.amount ?? '').trim() ? Number(depositForm.amount) : null,
+      amount: FIXED_DEPOSIT,
       reference: depositForm.reference || null,
     };
 
@@ -422,7 +433,7 @@ export default function ContractCreation(){
     }
 
     const payload = {
-      amount: String(depositForm.amount ?? '').trim() ? Number(depositForm.amount) : null,
+      amount: FIXED_DEPOSIT,
       returnPath: `/staff/contracts/create?contractId=${created.id}`,
     };
 
@@ -534,8 +545,24 @@ export default function ContractCreation(){
           <h3 className="font-semibold mt-6 mb-2">Thông tin hợp đồng</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className="block text-sm mb-1">Tiền phòng</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+                value={form.roomPrice}
+                disabled
+                readOnly
+              />
+            </div>
+            <div>
               <label className="block text-sm mb-1">Tiền cọc</label>
-              <input type="number" className="w-full border rounded px-3 py-2" value={form.deposit} onChange={e=>setForm({ ...form, deposit: e.target.value })} />
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+                value={form.deposit}
+                disabled
+                readOnly
+              />
             </div>
             <div>
               <label className="block text-sm mb-1">Ngày bắt đầu</label>
@@ -613,9 +640,10 @@ export default function ContractCreation(){
                       <label className="block text-sm mb-1">Số tiền cọc</label>
                       <input
                         type="number"
-                        className="w-full border rounded px-3 py-2"
+                        className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
                         value={depositForm.amount}
-                        onChange={(e) => setDepositForm((p) => ({ ...p, amount: e.target.value }))}
+                        disabled
+                        readOnly
                       />
                     </div>
                     <div className="col-span-2">

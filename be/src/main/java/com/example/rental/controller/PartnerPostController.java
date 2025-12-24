@@ -22,8 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,6 +48,26 @@ public class PartnerPostController {
         private final FileStorageService fileStorageService;
         private final ObjectMapper objectMapper;
         private final MomoService momoService;
+
+        @Value("${app.frontend.base-url:http://localhost:3000}")
+        private String frontendBaseUrl;
+
+        private static final String ORDER_PARTNER_POST_PREFIX = "POST-";
+
+        private String buildFrontendReturnUrl(String returnPath) {
+                String feBase = (frontendBaseUrl == null || frontendBaseUrl.isBlank()) ? "http://localhost:3000" : frontendBaseUrl;
+                String path = (returnPath == null || returnPath.isBlank()) ? "/partner/my-listings" : returnPath;
+                if (!path.startsWith("/")) path = "/" + path;
+                return feBase + path;
+        }
+
+        private String buildBackendMomoReturnUrl(String feReturnUrl) {
+                return ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/momo/return")
+                        .queryParam("returnUrl", feReturnUrl)
+                        .build()
+                        .toUriString();
+        }
 
         /**
          * Lấy danh sách tin đăng của partner hiện tại (đang đăng nhập)
@@ -94,7 +116,6 @@ public class PartnerPostController {
                 List<PartnerPost> posts = partnerPostService.findPostsByPartnerId(partner.getId());
 
                 // Group views by month based on createdAt
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
                 java.util.Map<String, Integer> monthlyViews = new java.util.LinkedHashMap<>();
 
                 // Initialize last 6 months
@@ -153,7 +174,7 @@ public class PartnerPostController {
                                         .orElseThrow(() -> new ResourceNotFoundException("Partner", "username",
                                                         username));
 
-                        String orderId = UUID.randomUUID().toString();
+                        String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
 
                         long amount;
                         switch (request.getPostType()) {
@@ -175,7 +196,17 @@ public class PartnerPostController {
                         }
                         System.out.println("amount: " + amount);
 
-                        String paymentUrl = momoService.createATMPayment(amount, orderId).getPayUrl();
+                        String feReturnUrl = buildFrontendReturnUrl("/partner/my-listings");
+                        String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
+                        String orderInfo = "Thanh toan tin dang doi tac";
+                        String extraData = "";
+
+                        var momoResp = momoService.createATMPayment(amount, orderId, orderInfo, redirectUrl, extraData);
+                        if (momoResp == null || momoResp.getPayUrl() == null || momoResp.getPayUrl().isBlank()) {
+                                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                                                .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
+                        }
+                        String paymentUrl = momoResp.getPayUrl();
 
                         PartnerPost post = PartnerPost.builder()
                                         .partner(partner)
@@ -217,6 +248,57 @@ public class PartnerPostController {
                                         .body(ApiResponseDto.error(500, "Lỗi khi tạo tin đăng: " + e.getMessage(),
                                                         null));
                 }
+        }
+
+        /**
+         * Khởi tạo lại link thanh toán MoMo cho tin đang PENDING_PAYMENT (no-ngrok friendly).
+         */
+        @PostMapping("/{id}/momo/initiate")
+        @PreAuthorize("hasRole('PARTNER')")
+        public ResponseEntity<ApiResponseDto<java.util.Map<String, String>>> initiatePostMomo(
+                        @PathVariable Long id,
+                        @RequestParam(required = false) String returnPath) {
+
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                Partners partner = partnerRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("Partner", "username", username));
+
+                PartnerPost post = partnerPostService.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("PartnerPost", "id", id));
+
+                if (!post.getPartner().getId().equals(partner.getId())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                        .body(ApiResponseDto.error(403, "Bạn không có quyền thanh toán cho tin đăng này", null));
+                }
+
+                if (post.getStatus() == null || post.getStatus() != PostApprovalStatus.PENDING_PAYMENT) {
+                        return ResponseEntity.badRequest()
+                                        .body(ApiResponseDto.error(400, "Tin đăng không ở trạng thái chờ thanh toán", null));
+                }
+
+                long amount = getPostTypePrice(post.getPostType());
+
+                String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
+                String feReturnUrl = buildFrontendReturnUrl(returnPath != null ? returnPath : "/partner/my-listings");
+                String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
+
+                var momoResp = momoService.createATMPayment(amount, orderId,
+                                "Thanh toan tin dang #" + id,
+                                redirectUrl,
+                                "");
+                if (momoResp == null || momoResp.getPayUrl() == null || momoResp.getPayUrl().isBlank()) {
+                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                                        .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
+                }
+
+                post.setOrderId(orderId);
+                post.setPaymentUrl(momoResp.getPayUrl());
+                partnerPostService.savePost(post);
+
+                java.util.Map<String, String> resp = new java.util.HashMap<>();
+                resp.put("payUrl", momoResp.getPayUrl());
+                resp.put("orderId", orderId);
+                return ResponseEntity.ok(ApiResponseDto.success(200, "MoMo initiated", resp));
         }
 
         /**
@@ -317,8 +399,18 @@ public class PartnerPostController {
 
                                 long newAmount = getPostTypePrice(newPostType);
 
-                                String orderId = UUID.randomUUID().toString();
-                                newPaymentUrl = momoService.createATMPayment(newAmount, orderId).getPayUrl();
+                                String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
+                                String feReturnUrl = buildFrontendReturnUrl("/partner/my-listings");
+                                String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
+                                var momoResp = momoService.createATMPayment(newAmount, orderId,
+                                                "Thanh toan tin dang #" + id,
+                                                redirectUrl,
+                                                "");
+                                newPaymentUrl = momoResp != null ? momoResp.getPayUrl() : null;
+                                if (newPaymentUrl == null || newPaymentUrl.isBlank()) {
+                                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                                                        .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
+                                }
                                 // Change status back to pending payment and overwrite payment info
                                 post.setStatus(PostApprovalStatus.PENDING_PAYMENT);
                                 post.setPaymentUrl(newPaymentUrl);
@@ -327,9 +419,19 @@ public class PartnerPostController {
                         } else if (!oldPostType.equals(newPostType)
                                         && post.getStatus() == PostApprovalStatus.PENDING_PAYMENT) {
                                 // If not yet paid, allow free change and recreate payment link
-                                String orderId = UUID.randomUUID().toString();
+                                String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
                                 long newAmount = getPostTypePrice(newPostType);
-                                newPaymentUrl = momoService.createATMPayment(newAmount, orderId).getPayUrl();
+                                String feReturnUrl = buildFrontendReturnUrl("/partner/my-listings");
+                                String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
+                                var momoResp = momoService.createATMPayment(newAmount, orderId,
+                                                "Thanh toan tin dang #" + id,
+                                                redirectUrl,
+                                                "");
+                                newPaymentUrl = momoResp != null ? momoResp.getPayUrl() : null;
+                                if (newPaymentUrl == null || newPaymentUrl.isBlank()) {
+                                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                                                        .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
+                                }
                                 post.setPaymentUrl(newPaymentUrl);
                                 post.setOrderId(orderId);
                         }

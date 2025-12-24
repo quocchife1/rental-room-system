@@ -56,6 +56,10 @@ const partnerApi = {
     return axiosClient.get(`/api/partner-posts/${id}`);
   },
 
+  initiatePostMomoPayment: (postId) => {
+    return axiosClient.post(`/api/partner-posts/${postId}/momo/initiate`);
+  },
+
   // --- Thanh toán (Partner Payments) ---
   createPayment: (data) => {
     // data: { postId, amount, method }

@@ -39,6 +39,8 @@ import org.springframework.data.domain.Pageable;
 @RequiredArgsConstructor
 public class ContractServiceImpl implements ContractService {
 
+    private static final BigDecimal FIXED_DEPOSIT_AMOUNT = BigDecimal.valueOf(1_000_000);
+
     private final ContractRepository contractRepository;
     private final TenantRepository tenantRepository;
     private final RoomRepository roomRepository;
@@ -213,7 +215,7 @@ public class ContractServiceImpl implements ContractService {
                 .roomNumber(room.getRoomNumber())
                 .startDate(request.getStartDate() != null ? request.getStartDate() : LocalDate.now())
             .endDate(request.getEndDate())
-                .deposit(request.getDeposit() != null ? request.getDeposit() : BigDecimal.ZERO)
+                .deposit(FIXED_DEPOSIT_AMOUNT)
                 .status(ContractStatus.PENDING)
                 .build();
 
@@ -304,6 +306,8 @@ public class ContractServiceImpl implements ContractService {
                 .toUriString();
 
         contract.setSignedContractUrl(fileUri);
+        // Enforce fixed deposit when moving to deposit stage
+        contract.setDeposit(FIXED_DEPOSIT_AMOUNT);
         // Upload xong vẫn CHƯA kích hoạt: chờ thanh toán tiền cọc
         contract.setStatus(ContractStatus.SIGNED_PENDING_DEPOSIT);
 
@@ -327,8 +331,9 @@ public class ContractServiceImpl implements ContractService {
             throw new RuntimeException("Phương thức thanh toán không hợp lệ. Chỉ hỗ trợ CASH hoặc BANK_TRANSFER.");
         }
 
-        BigDecimal amount = request.getAmount() != null ? request.getAmount() : contract.getDeposit();
-        if (amount == null) amount = BigDecimal.ZERO;
+        // Enforce fixed deposit amount
+        contract.setDeposit(FIXED_DEPOSIT_AMOUNT);
+        BigDecimal amount = FIXED_DEPOSIT_AMOUNT;
 
         contract.setDepositPaymentMethod(request.getMethod());
         contract.setDepositPaidDate(LocalDateTime.now());
@@ -489,7 +494,8 @@ public class ContractServiceImpl implements ContractService {
 
         tenantRepository.save(tenant);
 
-        if (request.getDeposit() != null) contract.setDeposit(request.getDeposit());
+        // Enforce fixed deposit; ignore any incoming deposit edits
+        contract.setDeposit(FIXED_DEPOSIT_AMOUNT);
         if (request.getStartDate() != null) contract.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) contract.setEndDate(request.getEndDate());
 

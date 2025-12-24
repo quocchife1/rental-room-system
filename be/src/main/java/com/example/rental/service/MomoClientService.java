@@ -2,6 +2,8 @@ package com.example.rental.service;
 
 import com.example.rental.dto.momo.CreateMomoRequest;
 import com.example.rental.dto.momo.CreateMomoResponse;
+import com.example.rental.dto.momo.QueryMomoRequest;
+import com.example.rental.dto.momo.QueryMomoResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -31,6 +33,20 @@ public class MomoClientService {
                     .block();
         } catch (WebClientResponseException e) {
             throw e; // bubble up with status and body for controller advice
+        }
+    }
+
+    public QueryMomoResponse queryTransaction(QueryMomoRequest request) {
+        try {
+            return momoWebClient.post()
+                    .uri("/query")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(QueryMomoResponse.class)
+                    .timeout(Duration.ofSeconds(15))
+                    .block();
+        } catch (WebClientResponseException e) {
+            throw e;
         }
     }
 

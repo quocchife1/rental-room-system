@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import contractApi from '../../api/contractApi';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Icon Components (Inline SVGs)
 const Icons = {
@@ -30,26 +31,66 @@ export default function MyContracts() {
   const [checkoutDate, setCheckoutDate] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
+  const [payingDepositId, setPayingDepositId] = useState(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const fetchContracts = async () => {
+    setLoading(true);
+    try {
+      const res = await contractApi.getMyContracts();
+      let data = [];
+      if (Array.isArray(res)) data = res;
+      else if (res && res.content) data = res.content;
+      else if (res && res.data) data = res.data.result || res.data || [];
+      else data = res || [];
+      setContracts(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchContracts = async () => {
-      setLoading(true);
-      try {
-        const res = await contractApi.getMyContracts();
-        let data = [];
-        if (Array.isArray(res)) data = res;
-        else if (res && res.content) data = res.content;
-        else if (res && res.data) data = res.data.result || res.data || [];
-        else data = res || [];
-        setContracts(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchContracts();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const momo = params.get('momo');
+    const orderId = params.get('orderId');
+    if (!momo) return;
+
+    if (momo === 'success') {
+      alert(`Thanh toán MoMo thành công${orderId ? ` (orderId: ${orderId})` : ''}.`);
+    } else {
+      alert(`Thanh toán MoMo thất bại${orderId ? ` (orderId: ${orderId})` : ''}.`);
+    }
+
+    setTimeout(() => {
+      fetchContracts();
+    }, 1200);
+
+    navigate(location.pathname, { replace: true });
+  }, [location.pathname, location.search]);
+
+  const handlePayDepositMomo = async (contractId) => {
+    setPayingDepositId(contractId);
+    try {
+      const resp = await contractApi.initiateDepositMomo(contractId, { returnPath: '/tenant/contracts' });
+      const payUrl = resp?.payUrl || resp?.data?.payUrl || resp?.result?.payUrl;
+      if (!payUrl) {
+        throw new Error('Không nhận được payUrl từ server');
+      }
+      window.location.href = payUrl;
+    } catch (error) {
+      alert(error?.response?.data?.message || error?.message || 'Không thể khởi tạo thanh toán MoMo');
+    } finally {
+      setPayingDepositId(null);
+    }
+  };
 
   const handleDownload = async (id, code) => {
     try {
@@ -173,6 +214,15 @@ export default function MyContracts() {
                 >
                   <Icons.Download /> Tải hợp đồng
                 </button>
+                {contract.status === 'SIGNED_PENDING_DEPOSIT' && (
+                  <button
+                    onClick={() => handlePayDepositMomo(contract.id)}
+                    disabled={payingDepositId === contract.id}
+                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-sm active:scale-95 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {payingDepositId === contract.id ? 'Đang chuyển đến MoMo...' : 'Thanh toán cọc MoMo'}
+                  </button>
+                )}
                 {contract.status === 'ACTIVE' && (
                   <button 
                     onClick={() => openCheckoutModal(contract.id)}

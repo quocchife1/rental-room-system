@@ -52,7 +52,7 @@ public class RentalServiceController {
 
     @Operation(summary = "Lấy dịch vụ theo ID")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER','ACCOUNTANT','RECEPTIONIST','MAINTENANCE','SECURITY')")
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER','ACCOUNTANT','RECEPTIONIST','MAINTENANCE','SECURITY','TENANT')")
     public ResponseEntity<com.example.rental.dto.ApiResponseDto<RentalServiceResponse>> getById(@PathVariable Long id) {
         RentalServiceResponse resp = rentalServiceService.getById(id);
         return ResponseEntity.ok(com.example.rental.dto.ApiResponseDto.success(200, "Service fetched", resp));
@@ -60,7 +60,7 @@ public class RentalServiceController {
 
     @Operation(summary = "Lấy toàn bộ dịch vụ")
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER','ACCOUNTANT','RECEPTIONIST','MAINTENANCE','SECURITY')")
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER','ACCOUNTANT','RECEPTIONIST','MAINTENANCE','SECURITY','TENANT')")
     public ResponseEntity<com.example.rental.dto.ApiResponseDto<java.util.List<RentalServiceResponse>>> getAll() {
         java.util.List<RentalServiceResponse> list = rentalServiceService.getAll();
         return ResponseEntity.ok(com.example.rental.dto.ApiResponseDto.success(200, "Services fetched", list));

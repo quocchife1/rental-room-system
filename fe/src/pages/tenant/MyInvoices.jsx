@@ -19,15 +19,48 @@ export default function MyInvoices() {
       }
     };
     fetchInvoices();
+
+    // If user was redirected back from MoMo (via backend return handler), refresh invoices from server.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('orderId');
+      const momo = params.get('momo');
+
+      if (momo != null || orderId != null) {
+        if (momo === 'success') {
+          alert('Thanh toán MoMo thành công. Hệ thống đang cập nhật lại hóa đơn...');
+        } else if (momo === 'failed') {
+          alert('Thanh toán MoMo chưa thành công. Vui lòng thử lại.');
+        }
+
+        // Clear query params to avoid repeated alerts on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Give backend a short moment then refetch
+        setTimeout(() => {
+          fetchInvoices();
+        }, 1200);
+      }
+    } catch (e) {
+      // ignore
+    }
   }, []);
 
   const handlePay = async (id, direct) => {
     setProcessingId(id);
     try {
-      await invoiceApi.payInvoice(id, direct);
+      const resp = await invoiceApi.payInvoice(id, direct);
+
+      // Online payment (MoMo): backend returns { payUrl, orderId }
+      if (!direct && resp && resp.payUrl) {
+        window.location.href = resp.payUrl;
+        return;
+      }
+
+      // Direct/cash confirmation (staff only)
       alert('Thanh toán thành công!');
 
-      const updateInvoiceState = (inv) => 
+      const updateInvoiceState = (inv) =>
         inv.id === id ? { ...inv, status: 'PAID', paidDirect: direct } : inv;
 
       setInvoices((prev) => prev.map(updateInvoiceState));

@@ -10,4 +10,6 @@ import java.util.List;
 public interface PartnerPaymentRepository extends JpaRepository<PartnerPayment, Long> {
     // Tìm thanh toán theo ID đối tác
     List<PartnerPayment> findByPartnerId(Long partnerId);
+
+    boolean existsByPaymentCode(String paymentCode);
 }

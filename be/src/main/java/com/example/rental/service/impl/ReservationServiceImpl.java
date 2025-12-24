@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ReservationServiceImpl implements ReservationService {
 
+    private static final java.math.BigDecimal FIXED_DEPOSIT_AMOUNT = java.math.BigDecimal.valueOf(1_000_000);
+
     private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
     private final TenantRepository tenantRepository;
@@ -402,7 +404,7 @@ public class ReservationServiceImpl implements ReservationService {
                 contract.setBranchCode("DEFAULT");
             }
             contract.setRoomNumber(room.getRoomNumber());
-            contract.setDeposit(room.getPrice());
+            contract.setDeposit(FIXED_DEPOSIT_AMOUNT);
         }
 
         contract.setStatus(ContractStatus.ACTIVE);
@@ -456,7 +458,8 @@ public class ReservationServiceImpl implements ReservationService {
         dto.setStudentId(tenant.getStudentId());
         dto.setUniversity(tenant.getUniversity());
 
-        dto.setDeposit(room.getPrice());
+        dto.setRoomPrice(room.getPrice());
+        dto.setDeposit(FIXED_DEPOSIT_AMOUNT);
         dto.setStartDate(java.time.LocalDate.now());
         return dto;
     }
