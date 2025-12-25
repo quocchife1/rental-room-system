@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import com.example.rental.security.Audited;
 import com.example.rental.entity.AuditAction;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,16 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final BranchRepository branchRepository;
     private final EmployeeRepository employeeRepository;
+
+        private static final Set<String> EMPLOYEE_ROLES = Set.of(
+            "ADMIN",
+            "DIRECTOR",
+            "MANAGER",
+            "ACCOUNTANT",
+            "RECEPTIONIST",
+            "MAINTENANCE",
+            "SECURITY"
+        );
 
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -56,6 +67,17 @@ public class RoomServiceImpl implements RoomService {
         return false;
     }
 
+    private boolean isEmployeeAuthenticated() {
+        for (String r : EMPLOYEE_ROLES) {
+            if (hasRole(r)) return true;
+        }
+        return false;
+    }
+
+    private boolean isRestrictedEmployee() {
+        return isEmployeeAuthenticated() && !(hasRole("ADMIN") || hasRole("DIRECTOR"));
+    }
+
     private String getCurrentEmployeeBranchCode() {
         String username = getCurrentUsername();
         if (username == null) throw new UsernameNotFoundException("Unauthenticated");
@@ -71,25 +93,20 @@ public class RoomServiceImpl implements RoomService {
         return emp.getBranch().getBranchCode();
     }
 
-    private void enforceManagerSameBranch(Room room) {
+    private void enforceEmployeeSameBranch(Room room) {
         if (room == null) return;
-        // ADMIN/DIRECTOR: không giới hạn chi nhánh
-        if (hasRole("ADMIN") || hasRole("DIRECTOR")) return;
-
-        // MANAGER: chỉ thao tác phòng thuộc chi nhánh của mình
-        if (hasRole("MANAGER")) {
-            String myBranch = getCurrentEmployeeBranchCode();
-            String roomBranch = room.getBranch() != null ? room.getBranch().getBranchCode() : room.getBranchCode();
-            if (roomBranch == null || !roomBranch.equalsIgnoreCase(myBranch)) {
-                throw new RuntimeException("Bạn chỉ có thể thao tác phòng thuộc chi nhánh của mình: " + myBranch);
-            }
+        if (!isRestrictedEmployee()) return;
+        String myBranch = getCurrentEmployeeBranchCode();
+        String roomBranch = room.getBranch() != null ? room.getBranch().getBranchCode() : room.getBranchCode();
+        if (roomBranch == null || !roomBranch.equalsIgnoreCase(myBranch)) {
+            throw new RuntimeException("Bạn chỉ có thể xem/thao tác phòng thuộc chi nhánh của mình: " + myBranch);
         }
     }
 
     @Override
     public List<RoomResponse> getAllRooms() {
-        // MANAGER: chỉ xem chi nhánh của mình
-        if (hasRole("MANAGER") && !hasRole("ADMIN")) {
+        // Nhân viên (không phải ADMIN/DIRECTOR): chỉ xem phòng chi nhánh của mình
+        if (isRestrictedEmployee()) {
             String branchCode = getCurrentEmployeeBranchCode();
             return roomRepository.findByBranchCode(branchCode).stream()
                 .map(RoomMapper::toResponse)
@@ -158,7 +175,7 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
-        enforceManagerSameBranch(room);
+        enforceEmployeeSameBranch(room);
 
         if (!hasRole("ADMIN") && !hasRole("DIRECTOR") && !hasRole("MANAGER")) {
             throw new RuntimeException("Bạn không có quyền cập nhật mô tả phòng.");
@@ -174,7 +191,7 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
-        enforceManagerSameBranch(room);
+        enforceEmployeeSameBranch(room);
 
         // MANAGER: không được đổi trạng thái phòng đang thuê/đã đặt
         if (hasRole("MANAGER") && !hasRole("ADMIN")) {
@@ -201,7 +218,7 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse getRoomById(Long id) {
         Room room = roomRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Room not found"));
-        enforceManagerSameBranch(room);
+        enforceEmployeeSameBranch(room);
         return RoomMapper.toResponse(room);
     }
 
@@ -209,14 +226,14 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse getRoomByCode(String roomCode) {
         Room room = roomRepository.findByRoomCode(roomCode);
         if (room == null) throw new EntityNotFoundException("Room not found");
-        enforceManagerSameBranch(room);
+        enforceEmployeeSameBranch(room);
         return RoomMapper.toResponse(room);
     }
 
     @Override
     public List<RoomResponse> getRoomsByBranchCode(String branchCode) {
-        // MANAGER: chỉ xem chi nhánh của mình
-        if (hasRole("MANAGER") && !hasRole("ADMIN")) {
+        // Nhân viên (không phải ADMIN/DIRECTOR): chỉ xem chi nhánh của mình
+        if (isRestrictedEmployee()) {
             String myBranch = getCurrentEmployeeBranchCode();
             if (branchCode != null && !branchCode.trim().isEmpty() && !myBranch.equalsIgnoreCase(branchCode.trim())) {
                 throw new RuntimeException("Bạn chỉ có thể xem phòng thuộc chi nhánh của mình: " + myBranch);
@@ -230,7 +247,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public Page<RoomResponse> getRoomsByBranchCode(String branchCode, Pageable pageable) {
-        if (hasRole("MANAGER") && !hasRole("ADMIN")) {
+        if (isRestrictedEmployee()) {
             String myBranch = getCurrentEmployeeBranchCode();
             if (branchCode != null && !branchCode.trim().isEmpty() && !myBranch.equalsIgnoreCase(branchCode.trim())) {
                 throw new RuntimeException("Bạn chỉ có thể xem phòng thuộc chi nhánh của mình: " + myBranch);
@@ -244,14 +261,26 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<RoomResponse> getRoomsByStatus(RoomStatus status) {
-        return roomRepository.findByStatus(status).stream()
+        if (isRestrictedEmployee()) {
+            String branchCode = getCurrentEmployeeBranchCode();
+            return roomRepository.findByStatusAndBranchCode(status, branchCode).stream()
                 .map(RoomMapper::toResponse)
                 .collect(Collectors.toList());
+        }
+        return roomRepository.findByStatus(status).stream()
+            .map(RoomMapper::toResponse)
+            .collect(Collectors.toList());
     }
 
     @Override
     public Page<RoomResponse> getRoomsByStatus(RoomStatus status, Pageable pageable) {
-        Page<Room> page = roomRepository.findByStatus(status, pageable);
+        Page<Room> page;
+        if (isRestrictedEmployee()) {
+            String branchCode = getCurrentEmployeeBranchCode();
+            page = roomRepository.findByStatusAndBranchCode(status, branchCode, pageable);
+        } else {
+            page = roomRepository.findByStatus(status, pageable);
+        }
         List<RoomResponse> content = page.getContent().stream().map(RoomMapper::toResponse).collect(Collectors.toList());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }

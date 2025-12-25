@@ -6,6 +6,7 @@ import com.example.rental.repository.*;
 import com.example.rental.service.DashboardService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,45 @@ public class DashboardServiceImpl implements DashboardService {
     private final TenantRepository tenantRepository;
     private final MaintenanceRequestRepository maintenanceRepository;
     private final BranchRepository branchRepository;
+        private final EmployeeRepository employeeRepository;
+
+        private boolean hasRole(String roleName) {
+                try {
+                        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                        if (auth == null || auth.getAuthorities() == null) return false;
+                        String expected = roleName != null && roleName.startsWith("ROLE_") ? roleName : ("ROLE_" + roleName);
+                        return auth.getAuthorities().stream().anyMatch(a -> expected.equals(a.getAuthority()));
+                } catch (Exception ignored) {
+                        return false;
+                }
+        }
+
+        private boolean isManagerAuthenticated() {
+                return hasRole("MANAGER");
+        }
+
+        private String currentUsername() {
+                try {
+                        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                        return auth != null ? auth.getName() : null;
+                } catch (Exception ignored) {
+                        return null;
+                }
+        }
+
+        private Long getMyBranchIdForEmployee() {
+                String username = currentUsername();
+                if (username == null) {
+                        throw new AccessDeniedException("Không xác định người dùng");
+                }
+                Employees e = employeeRepository.findByUsername(username)
+                                .or(() -> employeeRepository.findByUsernameIgnoreCase(username))
+                                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy nhân viên"));
+                if (e.getBranch() == null || e.getBranch().getId() == null) {
+                        throw new IllegalStateException("Nhân viên chưa được gán chi nhánh");
+                }
+                return e.getBranch().getId();
+        }
     
     @Override
     public DirectorDashboardDTO getDirectorDashboard(Long branchId) {
@@ -39,6 +79,11 @@ public class DashboardServiceImpl implements DashboardService {
     
     @Override
     public DirectorDashboardDTO getDashboardByDateRange(Long branchId, LocalDateTime startDate, LocalDateTime endDate) {
+                // MANAGER: bắt buộc chỉ xem dashboard/doanh thu của chi nhánh mình
+                if (isManagerAuthenticated()) {
+                        branchId = getMyBranchIdForEmployee();
+                }
+
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = LocalDate.now();
         LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
