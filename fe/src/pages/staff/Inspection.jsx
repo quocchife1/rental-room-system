@@ -436,7 +436,7 @@ export default function Inspection() {
               <input 
                 type="text" 
                 placeholder="Tìm theo phòng hoặc tên..." 
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] text-sm"
               />
             </div>
           </div>
@@ -453,13 +453,13 @@ export default function Inspection() {
                   onClick={() => loadReport(r)}
                   className={`group p-4 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-md ${
                     selected?.id === r.id 
-                      ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' 
+                      ? 'bg-[color:var(--app-primary-soft)] border-[color:var(--app-border)] ring-1 ring-[color:var(--app-primary-soft)]' 
                       : 'bg-white border-slate-100 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="p-1.5 rounded-md bg-indigo-100 text-indigo-700"><Icons.Home /></span>
+                      <span className="p-1.5 rounded-md bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)]"><Icons.Home /></span>
                       <span className="font-bold text-slate-800">{r.roomNumber || r.roomCode || 'N/A'}</span>
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -515,7 +515,7 @@ export default function Inspection() {
                             <Icons.Check /> Duyệt
                           </button>
                         )}
-                        <button onClick={saveReport} disabled={busy} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-md shadow-indigo-200 transition-all active:scale-95">
+                        <button onClick={saveReport} disabled={busy} className="flex items-center gap-2 px-5 py-2 bg-[color:var(--app-primary)] text-white rounded-lg hover:bg-[color:var(--app-primary-hover)] font-medium shadow-md transition-all active:scale-95">
                           <Icons.Save /> Lưu biên bản
                         </button>
                      </div>
@@ -524,7 +524,7 @@ export default function Inspection() {
                   {/* Meter Readings Card */}
                   <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
                     <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                      <span className="w-1 h-5 bg-indigo-500 rounded-full block"></span>
+                      <span className="w-1 h-5 bg-[color:var(--app-primary)] rounded-full block"></span>
                       Chỉ số điện nước
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -534,7 +534,7 @@ export default function Inspection() {
                           <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Số đầu</label>
                             <input
-                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono"
+                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none font-mono"
                               value={reportJson.electricityPrev}
                               onChange={(e) => setReportJson((p) => ({ ...p, electricityPrev: e.target.value }))}
                               inputMode="numeric"
@@ -544,7 +544,7 @@ export default function Inspection() {
                           <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Số cuối</label>
                             <input
-                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono"
+                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none font-mono"
                               value={reportJson.electricityCurr}
                               onChange={(e) => setReportJson((p) => ({ ...p, electricityCurr: e.target.value }))}
                               inputMode="numeric"
@@ -576,7 +576,7 @@ export default function Inspection() {
                           <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Số đầu</label>
                             <input
-                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono"
+                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none font-mono"
                               value={reportJson.waterPrev}
                               onChange={(e) => setReportJson((p) => ({ ...p, waterPrev: e.target.value }))}
                               inputMode="numeric"
@@ -586,7 +586,7 @@ export default function Inspection() {
                           <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Số cuối</label>
                             <input
-                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none font-mono"
+                              className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none font-mono"
                               value={reportJson.waterCurr}
                               onChange={(e) => setReportJson((p) => ({ ...p, waterCurr: e.target.value }))}
                               inputMode="numeric"
@@ -640,7 +640,7 @@ export default function Inspection() {
                                 <span className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{it.key}</span>
                               </div>
                               <textarea
-                                className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm min-h-[80px] resize-y"
+                                className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none text-sm min-h-[80px] resize-y"
                                 value={it.note}
                                 onChange={(e) =>
                                   setReportJson((p) => ({
@@ -683,7 +683,7 @@ export default function Inspection() {
                               <div>
                                 <div className="flex items-center justify-between mb-2">
                                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Hình ảnh</label>
-                                  <label className="cursor-pointer text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                  <label className="cursor-pointer text-xs font-medium text-[color:var(--app-primary)] hover:text-[color:var(--app-primary-hover)] flex items-center gap-1">
                                     <Icons.Camera /> Thêm ảnh
                                     <input
                                       type="file"

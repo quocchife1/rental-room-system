@@ -259,7 +259,7 @@ export default function ContractCreation(){
         <h3 className="font-semibold mb-2">Hợp đồng đã ký</h3>
         <div className="border rounded-lg p-4 bg-gray-50">
           <div className="text-sm mb-3">
-            <a className="text-indigo-600 underline" href={url} target="_blank" rel="noreferrer">Mở file đã ký</a>
+            <a className="text-[color:var(--app-primary)] underline" href={url} target="_blank" rel="noreferrer">Mở file đã ký</a>
           </div>
           {isImage && (
             <img src={url} alt="signed-contract" className="max-h-[360px] w-auto rounded border bg-white" />
@@ -576,19 +576,19 @@ export default function ContractCreation(){
 
           <div className="flex flex-wrap gap-3 justify-end mt-6">
             {!isCompletionMode && (
-              <button disabled={creating} className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={handleCreate}>Lưu & Tạo hợp đồng</button>
+              <button disabled={creating} className="px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white disabled:opacity-50" onClick={handleCreate}>Lưu & Tạo hợp đồng</button>
             )}
             {isCompletionMode && canEditContract && (
-              <button disabled={creating} className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={handleUpdate}>Lưu thay đổi</button>
+              <button disabled={creating} className="px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white disabled:opacity-50" onClick={handleUpdate}>Lưu thay đổi</button>
             )}
             <button disabled={!created?.id} className="px-4 py-2 rounded bg-emerald-600 text-white disabled:opacity-50" onClick={handleDownload}>Tải hợp đồng (DOCX)</button>
-            <label className={`px-4 py-2 rounded bg-purple-600 text-white cursor-pointer ${!created?.id || !canUploadSigned ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <label className={`px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white cursor-pointer ${!created?.id || !canUploadSigned ? 'opacity-50 cursor-not-allowed' : ''}`}> 
               Tải lên hợp đồng đã ký
               <input key={uploadInputKey} type="file" accept="image/*,application/pdf" className="hidden" disabled={!created?.id || uploading || !canUploadSigned} onChange={handleUploadSigned} />
             </label>
             <button
               disabled={!created?.id || !canUploadSigned || uploading || !pendingSignedFile}
-              className="px-4 py-2 rounded bg-indigo-600 text-white disabled:opacity-50"
+              className="px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white disabled:opacity-50"
               onClick={confirmUploadSigned}
             >
               Xác nhận tải lên
@@ -664,7 +664,7 @@ export default function ContractCreation(){
                       <div>Số điện thoại: <span className="font-medium">{systemConfig?.momoReceiverPhone || '-'}</span></div>
                       {systemConfig?.momoReceiverQrUrl ? (
                         <div className="mt-2">
-                          <a className="text-indigo-600 underline" href={systemConfig.momoReceiverQrUrl} target="_blank" rel="noreferrer">Mở QR MoMo</a>
+                          <a className="text-[color:var(--app-primary)] underline" href={systemConfig.momoReceiverQrUrl} target="_blank" rel="noreferrer">Mở QR MoMo</a>
                         </div>
                       ) : null}
                       <div className="mt-2 text-xs text-gray-600">Gợi ý nội dung chuyển khoản: mã hợp đồng hoặc mã tham chiếu.</div>
@@ -681,7 +681,7 @@ export default function ContractCreation(){
                     {depositForm.method === 'MOMO' ? (
                       <button
                         disabled={uploading}
-                        className="px-4 py-2 rounded bg-indigo-600 text-white disabled:opacity-50"
+                        className="px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white disabled:opacity-50"
                         onClick={initiateMomoDeposit}
                       >
                         Thanh toán MoMo
@@ -689,7 +689,7 @@ export default function ContractCreation(){
                     ) : (
                       <button
                         disabled={uploading}
-                        className="px-4 py-2 rounded bg-indigo-600 text-white disabled:opacity-50"
+                        className="px-4 py-2 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white disabled:opacity-50"
                         onClick={confirmDepositPayment}
                       >
                         Xác nhận đã thu tiền cọc
@@ -703,12 +703,12 @@ export default function ContractCreation(){
                 <div className="mt-3 text-sm">
                   {created?.depositInvoiceUrl && (
                     <div>
-                      <a className="text-indigo-600 underline" href={created.depositInvoiceUrl} target="_blank" rel="noreferrer">In hóa đơn tiền cọc</a>
+                      <a className="text-[color:var(--app-primary)] underline" href={created.depositInvoiceUrl} target="_blank" rel="noreferrer">In hóa đơn tiền cọc</a>
                     </div>
                   )}
                   {created?.depositReceiptUrl && (
                     <div>
-                      <a className="text-indigo-600 underline" href={created.depositReceiptUrl} target="_blank" rel="noreferrer">In biên bản nhận tiền cọc</a>
+                      <a className="text-[color:var(--app-primary)] underline" href={created.depositReceiptUrl} target="_blank" rel="noreferrer">In biên bản nhận tiền cọc</a>
                     </div>
                   )}
                 </div>

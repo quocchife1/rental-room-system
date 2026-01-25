@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, useRoutes } from 'react-router-dom';
 import appRoutes from './routes';
+import ThemeRoot from './components/theme/shared/ThemeRoot';
 
 // Component này sẽ chịu trách nhiệm render routes từ mảng config
 const AppRoutes = () => {
@@ -11,7 +12,9 @@ const AppRoutes = () => {
 function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <ThemeRoot>
+        <AppRoutes />
+      </ThemeRoot>
     </BrowserRouter>
   );
 }

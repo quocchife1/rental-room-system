@@ -139,13 +139,13 @@ export default function MyContracts() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-800">
+    <div className="min-h-screen bg-[color:var(--app-bg)] p-6 md:p-10 font-sans text-[color:var(--app-text)]">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header */}
         <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Hợp đồng thuê phòng</h2>
-          <p className="text-slate-500 mt-2">Quản lý thông tin hợp đồng và các yêu cầu liên quan.</p>
+          <h2 className="text-3xl font-extrabold text-[color:var(--app-text)] tracking-tight">Hợp đồng thuê phòng</h2>
+          <p className="text-[color:var(--app-muted)] mt-2">Quản lý thông tin hợp đồng và các yêu cầu liên quan.</p>
         </div>
 
         {/* Contract List */}
@@ -153,23 +153,23 @@ export default function MyContracts() {
           {contracts.map(contract => (
             <div 
               key={contract.id} 
-              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
+              className="bg-[color:var(--app-surface-solid)] rounded-2xl shadow-sm border border-[color:var(--app-border)] overflow-hidden hover:shadow-lg transition-all duration-300 group"
             >
               {/* Card Header */}
-              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-white to-slate-50">
+              <div className="px-6 py-5 border-b border-[color:var(--app-border)] flex justify-between items-start bg-gradient-to-r from-[color:var(--app-surface-solid)] to-[color:var(--app-bg)]">
                 <div className="flex gap-4">
-                  <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                  <div className="p-3 bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] rounded-xl">
                     <Icons.Home />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-800">Phòng {contract.roomCode || 'N/A'}</h3>
-                    <p className="text-sm text-slate-500 font-mono">#{contract.contractCode}</p>
+                    <h3 className="text-lg font-bold text-[color:var(--app-text)]">Phòng {contract.roomCode || 'N/A'}</h3>
+                    <p className="text-sm text-[color:var(--app-muted)] font-mono">#{contract.contractCode}</p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                   contract.status === 'ACTIVE' 
                     ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                    : 'bg-[color:var(--app-bg)] text-[color:var(--app-muted)] border border-[color:var(--app-border)]'
                 }`}>
                   {contract.status === 'ACTIVE' ? 'Đang thuê' : contract.status}
                 </span>
@@ -178,39 +178,39 @@ export default function MyContracts() {
               {/* Card Body */}
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div className="flex items-center gap-2 text-slate-500 text-xs uppercase font-bold mb-1">
+                  <div className="bg-[color:var(--app-bg)] p-3 rounded-lg border border-[color:var(--app-border)]">
+                    <div className="flex items-center gap-2 text-[color:var(--app-muted)] text-xs uppercase font-bold mb-1">
                       <Icons.Calendar /> Ngày bắt đầu
                     </div>
-                    <div className="text-slate-800 font-medium">
+                    <div className="text-[color:var(--app-text)] font-medium">
                       {formatDate(contract.startDate)}
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div className="flex items-center gap-2 text-slate-500 text-xs uppercase font-bold mb-1">
+                  <div className="bg-[color:var(--app-bg)] p-3 rounded-lg border border-[color:var(--app-border)]">
+                    <div className="flex items-center gap-2 text-[color:var(--app-muted)] text-xs uppercase font-bold mb-1">
                       <Icons.Calendar /> Ngày kết thúc
                     </div>
-                    <div className="text-slate-800 font-medium">
+                    <div className="text-[color:var(--app-text)] font-medium">
                       {formatDate(contract.endDate)}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
-                  <div className="flex items-center gap-2 text-indigo-800 text-sm font-medium">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[color:var(--app-primary-soft)] border border-[color:var(--app-border)]">
+                  <div className="flex items-center gap-2 text-[color:var(--app-primary)] text-sm font-medium">
                     <Icons.Money /> Tiền cọc giữ chỗ
                   </div>
-                  <span className="text-lg font-bold text-indigo-700">
+                  <span className="text-lg font-bold text-[color:var(--app-primary)]">
                     {formatCurrency(contract.depositAmount)}
                   </span>
                 </div>
               </div>
 
               {/* Card Footer / Actions */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+              <div className="px-6 py-4 bg-[color:var(--app-bg)] border-t border-[color:var(--app-border)] flex gap-3">
                 <button 
                   onClick={() => handleDownload(contract.id, contract.contractCode)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-xl font-semibold hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm active:scale-95 text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[color:var(--app-surface-solid)] border border-[color:var(--app-border-strong)] text-[color:var(--app-text)] py-2.5 rounded-xl font-semibold hover:bg-[color:var(--app-bg)] transition-all shadow-sm active:scale-95 text-sm"
                 >
                   <Icons.Download /> Tải hợp đồng
                 </button>
@@ -218,7 +218,7 @@ export default function MyContracts() {
                   <button
                     onClick={() => handlePayDepositMomo(contract.id)}
                     disabled={payingDepositId === contract.id}
-                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-sm active:scale-95 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[color:var(--app-primary)] text-white py-2.5 rounded-xl font-semibold hover:bg-[color:var(--app-primary-hover)] transition-all shadow-sm active:scale-95 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {payingDepositId === contract.id ? 'Đang chuyển đến MoMo...' : 'Thanh toán cọc MoMo'}
                   </button>
@@ -237,18 +237,18 @@ export default function MyContracts() {
 
           {loading && (
              <div className="col-span-full py-20 text-center">
-               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-indigo-600"></div>
-               <p className="mt-2 text-slate-500 text-sm">Đang tải dữ liệu...</p>
+               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[color:var(--app-border)] border-t-[color:var(--app-primary)]"></div>
+               <p className="mt-2 text-[color:var(--app-muted)] text-sm">Đang tải dữ liệu...</p>
              </div>
           )}
 
           {!loading && contracts.length === 0 && (
-            <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-dashed border-slate-300">
-              <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+            <div className="col-span-full bg-[color:var(--app-surface-solid)] rounded-2xl p-12 text-center border border-dashed border-[color:var(--app-border-strong)]">
+              <div className="mx-auto w-16 h-16 bg-[color:var(--app-bg)] rounded-full flex items-center justify-center text-[color:var(--app-muted-2)] mb-4 border border-[color:var(--app-border)]">
                 <Icons.Home />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">Chưa có hợp đồng</h3>
-              <p className="text-slate-500">Bạn hiện tại chưa có hợp đồng thuê phòng nào.</p>
+              <h3 className="text-lg font-bold text-[color:var(--app-text)]">Chưa có hợp đồng</h3>
+              <p className="text-[color:var(--app-muted)]">Bạn hiện tại chưa có hợp đồng thuê phòng nào.</p>
             </div>
           )}
         </div>
@@ -258,10 +258,10 @@ export default function MyContracts() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setShowModal(false)}></div>
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl z-10 overflow-hidden transform transition-all scale-100">
-            <div className="bg-white px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-800">Yêu cầu trả phòng</h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <div className="bg-[color:var(--app-surface-solid)] rounded-2xl w-full max-w-md shadow-2xl z-10 overflow-hidden transform transition-all scale-100 border border-[color:var(--app-border)]">
+            <div className="bg-[color:var(--app-surface-solid)] px-6 py-4 border-b border-[color:var(--app-border)] flex justify-between items-center">
+              <h3 className="text-lg font-bold text-[color:var(--app-text)]">Yêu cầu trả phòng</h3>
+              <button onClick={() => setShowModal(false)} className="text-[color:var(--app-muted-2)] hover:text-[color:var(--app-text)] transition-colors">
                 <Icons.Close />
               </button>
             </div>
@@ -272,22 +272,22 @@ export default function MyContracts() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Ngày dự kiến trả</label>
+                <label className="block text-sm font-bold text-[color:var(--app-text)] mb-2">Ngày dự kiến trả</label>
                 <input 
                   type="date" 
                   required 
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  className="w-full bg-[color:var(--app-bg)] border border-[color:var(--app-border-strong)] rounded-xl px-4 py-3 text-[color:var(--app-text)] focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none"
                   value={checkoutDate}
                   onChange={(e) => setCheckoutDate(e.target.value)}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Lý do trả phòng</label>
+                <label className="block text-sm font-bold text-[color:var(--app-text)] mb-2">Lý do trả phòng</label>
                 <textarea 
                   required 
                   rows="4" 
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
+                  className="w-full bg-[color:var(--app-bg)] border border-[color:var(--app-border-strong)] rounded-xl px-4 py-3 text-[color:var(--app-text)] focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-all outline-none resize-none"
                   placeholder="Ví dụ: Chuyển công tác, hết hạn hợp đồng, về quê..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -298,7 +298,7 @@ export default function MyContracts() {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)} 
-                  className="flex-1 px-4 py-3 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl font-bold transition-all"
+                  className="flex-1 px-4 py-3 text-[color:var(--app-text)] bg-[color:var(--app-surface-solid)] border border-[color:var(--app-border-strong)] hover:bg-[color:var(--app-bg)] rounded-xl font-bold transition-all"
                 >
                   Hủy bỏ
                 </button>

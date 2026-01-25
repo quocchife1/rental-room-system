@@ -13,14 +13,14 @@ export default function PartnerLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[color:var(--app-bg)] text-[color:var(--app-text)] flex flex-col">
       <div className="flex flex-1 container mx-auto px-4 py-8 gap-6">
         {/* Sidebar */}
         <aside className="w-64 hidden md:block">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24">
+          <div className="bg-[color:var(--app-surface-solid)] rounded-xl shadow-sm border border-[color:var(--app-border)] p-4 sticky top-24">
             <div className="mb-6 px-4">
-               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kênh Đối tác</h2>
-               <p className="text-sm text-gray-500 mt-1">Quản lý nhà trọ & Tin đăng</p>
+               <h2 className="text-xs font-bold text-[color:var(--app-muted-2)] uppercase tracking-wider">Kênh Đối tác</h2>
+               <p className="text-sm text-[color:var(--app-muted)] mt-1">Quản lý nhà trọ & Tin đăng</p>
             </div>
             <nav className="space-y-1">
               {menuItems.map((item) => (
@@ -29,8 +29,8 @@ export default function PartnerLayout() {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm
                   ${location.pathname === item.path
-                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+                    ? 'bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] shadow-sm'
+                    : 'text-[color:var(--app-muted)] hover:bg-[color:var(--app-primary-soft)] hover:text-[color:var(--app-primary)]'}`}
                 >
                   <span>{item.icon}</span>
                   {item.label}

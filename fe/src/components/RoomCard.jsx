@@ -18,13 +18,13 @@ export default function RoomCard({ room }) {
     MAINTENANCE: { bg: 'bg-amber-50', text: 'text-amber-600', label: 'Bảo trì' }
   };
 
-  const status = statusConfig[room.status] || { bg: 'bg-gray-50', text: 'text-gray-600', label: room.status };
+  const status = statusConfig[room.status] || { bg: 'bg-[color:var(--app-bg)]', text: 'text-[color:var(--app-muted)]', label: room.status };
 
   return (
     // Thẻ Link bao bọc toàn bộ card
     <Link 
       to={`/rooms/${room.id}`} 
-      className="group block bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100"
+      className="group block bg-[color:var(--app-surface-solid)] rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-[color:var(--app-border)]"
     >
       {/* Image Container */}
       <div className="relative h-60 overflow-hidden">
@@ -49,24 +49,24 @@ export default function RoomCard({ room }) {
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">
+            <p className="text-xs font-bold text-[color:var(--app-primary)] uppercase tracking-wider mb-1">
               {room.branchCode}
             </p>
-            <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+            <h3 className="text-xl font-bold text-[color:var(--app-text)] group-hover:text-[color:var(--app-primary)] transition-colors">
               Phòng {room.roomNumber}
             </h3>
           </div>
           <div className="text-right">
-            <span className="block text-lg font-extrabold text-gray-900">
+            <span className="block text-lg font-extrabold text-[color:var(--app-text)]">
               {formatCurrency(room.price)}
             </span>
-            <span className="text-xs text-gray-400">/ tháng</span>
+            <span className="text-xs text-[color:var(--app-muted-2)]">/ tháng</span>
           </div>
         </div>
         
-        <div className="h-px bg-gray-100 my-4"></div>
+        <div className="h-px bg-[color:var(--app-border)] my-4"></div>
 
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-[color:var(--app-muted)]">
           <div className="flex items-center gap-2">
             <span>📐</span>
             <span>{room.area} m²</span>
@@ -75,7 +75,7 @@ export default function RoomCard({ room }) {
             <span>🛏️</span>
             <span>Standard</span>
           </div>
-          <div className="group-hover:translate-x-1 transition-transform duration-300 text-indigo-600 font-medium text-xs uppercase tracking-wide">
+          <div className="group-hover:translate-x-1 transition-transform duration-300 text-[color:var(--app-primary)] font-medium text-xs uppercase tracking-wide">
             Xem ngay &rarr;
           </div>
         </div>

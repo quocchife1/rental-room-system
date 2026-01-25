@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 // --- Shared Components ---
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
+import CompanyLayout from './components/company/CompanyLayout';
 
 // --- Public Pages ---
 import HomePage from './pages/HomePage';
@@ -173,11 +174,7 @@ const appRoutes = [
     path: '/staff',
     element: (
       <ProtectedRoute allowedRoles={['ADMIN','DIRECTOR','MANAGER','RECEPTIONIST','ACCOUNTANT','MAINTENANCE','SECURITY']}> 
-        <MainLayout>
-          <div className="min-h-[60vh]">
-            <Outlet />
-          </div>
-        </MainLayout>
+        <CompanyLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -286,11 +283,7 @@ const appRoutes = [
     path: '/admin',
     element: (
       <ProtectedRoute allowedRoles={['ADMIN','DIRECTOR']}>
-        <MainLayout>
-          <div className="min-h-[60vh]">
-            <Outlet />
-          </div>
-        </MainLayout>
+        <CompanyLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -307,6 +300,7 @@ const appRoutes = [
 function StaffIndexRedirect() {
   const role = useSelector((s) => s?.auth?.user?.role);
   if (role === 'ACCOUNTANT') return <Navigate to="finance/invoices" replace />;
+  if (role === 'MAINTENANCE') return <Navigate to="maintenance/board" replace />;
   return <Navigate to="rooms" replace />;
 }
 

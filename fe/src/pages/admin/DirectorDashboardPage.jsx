@@ -56,7 +56,7 @@ export default function DirectorDashboardPage() {
   const topOverdueInvoices = Array.isArray(payload?.topOverdueInvoices) ? payload.topOverdueInvoices : [];
   const expiringContracts = Array.isArray(payload?.expiringContracts) ? payload.expiringContracts : [];
 
-  const pieColors = ['text-indigo-500', 'text-emerald-500', 'text-amber-500', 'text-rose-500', 'text-blue-500', 'text-slate-500'];
+  const pieColors = ['text-[color:var(--app-primary)]', 'text-emerald-500', 'text-amber-500', 'text-rose-500', 'text-blue-500', 'text-slate-500'];
 
   const pieData = revenueByBranchThisMonth
     .filter(i => i && (i.revenue ?? 0) !== 0)
@@ -185,7 +185,7 @@ export default function DirectorDashboardPage() {
                              <div className="w-16 text-sm font-bold text-slate-500 text-right">T{r.month}/{r.year}</div>
                              <div className="flex-1 h-8 bg-slate-100 rounded-full overflow-hidden relative group">
                                 <div 
-                                  className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end px-2"
+                                  className="h-full bg-[color:var(--app-primary)] rounded-full transition-all duration-1000 ease-out flex items-center justify-end px-2"
                                   style={{ width: `${Math.max(widthPct, 5)}%` }}
                                 >
                                   <span className="text-xs text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">

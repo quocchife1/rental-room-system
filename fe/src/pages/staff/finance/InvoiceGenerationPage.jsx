@@ -119,7 +119,7 @@ export default function InvoiceGenerationPage() {
           <button
             onClick={generateBulk}
             disabled={loading || !ym}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-indigo-200 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white px-5 py-2.5 rounded-lg shadow-md font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Tạo hàng loạt hóa đơn gửi đến người thuê"
           >
             Tạo hàng loạt hóa đơn
@@ -131,7 +131,7 @@ export default function InvoiceGenerationPage() {
             <label className="block text-xs font-bold text-slate-500 mb-1">Tháng làm việc</label>
             <input
               type="month"
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             />
@@ -178,7 +178,7 @@ export default function InvoiceGenerationPage() {
 
                     {!isExpanded(r.contractId) && (
                       <div className="text-sm font-extrabold text-slate-700 whitespace-nowrap">
-                        Tổng cộng:&nbsp;<span className="text-indigo-700">{formatMoneyVnd(r.amount)}</span>
+                        Tổng cộng:&nbsp;<span className="text-[color:var(--app-primary)]">{formatMoneyVnd(r.amount)}</span>
                       </div>
                     )}
 
@@ -227,7 +227,7 @@ export default function InvoiceGenerationPage() {
                   <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
                     <div className="text-sm font-extrabold text-slate-700">
                       TỔNG CỘNG:&nbsp;
-                      <span className="text-indigo-700">{formatMoneyVnd(r.amount)}</span>
+                      <span className="text-[color:var(--app-primary)]">{formatMoneyVnd(r.amount)}</span>
                     </div>
                   </div>
                 )}

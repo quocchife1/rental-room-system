@@ -276,7 +276,7 @@ export default function InvoiceManagementPage() {
              <button 
                onClick={generateMonthlyInvoices} 
                disabled={loading}
-               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-indigo-200 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+               className="flex items-center gap-2 bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white px-5 py-2.5 rounded-lg shadow-md font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
              >
                <Icons.Plus />
                Tạo hóa đơn tháng này
@@ -321,13 +321,13 @@ export default function InvoiceManagementPage() {
 
            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Icons.Building /></div>
+                <div className="p-3 bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] rounded-xl"><Icons.Building /></div>
                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chi nhánh</span>
               </div>
               <div className="w-full">
                  {!isManager ? (
                    <input
-                     className="w-full border-b border-slate-300 focus:border-indigo-500 outline-none py-1 text-slate-800 font-medium placeholder:font-normal"
+                  className="w-full border-b border-slate-300 focus:border-[color:var(--app-primary)] outline-none py-1 text-slate-800 font-medium placeholder:font-normal"
                      value={branchId}
                      onChange={(e) => setBranchId(e.target.value)}
                      placeholder="Nhập ID chi nhánh..."
@@ -347,7 +347,7 @@ export default function InvoiceManagementPage() {
                 <label className="block text-xs font-bold text-slate-500 mb-1">Tháng làm việc</label>
                 <input
                   type="month"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
                   value={month}
                   onChange={(e) => { setMonth(e.target.value); setPage(0); }}
                 />
@@ -355,7 +355,7 @@ export default function InvoiceManagementPage() {
               <div className="w-full md:w-48">
                 <label className="block text-xs font-bold text-slate-500 mb-1">Trạng thái</label>
                 <select
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
                   value={status}
                   onChange={(e) => { setStatus(e.target.value); setPage(0); }}
                 >
@@ -406,14 +406,14 @@ export default function InvoiceManagementPage() {
 
             <div className="mt-3 flex flex-col md:flex-row gap-3">
               <input
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
                 value={cashLookupId}
                 onChange={(e) => setCashLookupId(e.target.value)}
                 placeholder="Nhập mã hóa đơn (VD: 123)"
                 inputMode="numeric"
               />
               <button
-                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={lookupCashInvoice}
                 disabled={cashLoading}
               >
@@ -458,7 +458,7 @@ export default function InvoiceManagementPage() {
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
                     <div className="text-xs text-slate-500 font-bold uppercase">Số tiền</div>
-                    <div className="font-extrabold text-indigo-700">{formatMoneyVnd(cashInvoice.amount)}</div>
+                    <div className="font-extrabold text-[color:var(--app-primary)]">{formatMoneyVnd(cashInvoice.amount)}</div>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
                     <div className="text-xs text-slate-500 font-bold uppercase">Trạng thái</div>
@@ -594,7 +594,7 @@ export default function InvoiceManagementPage() {
                         <div className="font-semibold">{inv.roomCode || (inv.roomNumber ? `Phòng ${inv.roomNumber}` : '-')}</div>
                         {inv.roomCode && inv.roomNumber ? <div className="text-xs text-slate-500 mt-0.5">Phòng {inv.roomNumber}</div> : null}
                       </td>
-                      <td className="px-6 py-4 font-bold text-indigo-700 text-base">{formatMoneyVnd(inv.amount)}</td>
+                      <td className="px-6 py-4 font-bold text-[color:var(--app-primary)] text-base">{formatMoneyVnd(inv.amount)}</td>
                       <td className="px-6 py-4 text-slate-600">{formatDate(inv.dueDate)}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(inv.status)}`}>

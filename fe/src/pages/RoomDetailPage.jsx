@@ -109,7 +109,7 @@ export default function RoomDetailPage() {
   if (loading) return (
     <MainLayout>
        <div className="min-h-[60vh] flex items-center justify-center">
-         <div className="text-gray-400 font-medium animate-pulse">Đang tải dữ liệu...</div>
+         <div className="text-[color:var(--app-muted-2)] font-medium animate-pulse">Đang tải dữ liệu...</div>
        </div>
     </MainLayout>
   );
@@ -117,7 +117,7 @@ export default function RoomDetailPage() {
   if (!room) return (
     <MainLayout>
        <div className="min-h-[60vh] flex items-center justify-center">
-         <div className="text-gray-900 font-bold text-xl">Không tìm thấy thông tin phòng!</div>
+         <div className="text-[color:var(--app-text)] font-bold text-xl">Không tìm thấy thông tin phòng!</div>
        </div>
     </MainLayout>
   );
@@ -126,16 +126,16 @@ export default function RoomDetailPage() {
     <MainLayout>
       <div className="container mx-auto px-6 py-10 relative">
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm font-medium text-gray-400 mb-8">
-            <Link to="/" className="hover:text-indigo-600 transition-colors">Trang chủ</Link>
+        <div className="flex items-center text-sm font-medium text-[color:var(--app-muted-2)] mb-8">
+            <Link to="/" className="hover:text-[color:var(--app-primary)] transition-colors">Trang chủ</Link>
             <span className="mx-3">/</span>
-            <span className="text-gray-900">Chi tiết phòng {room.roomNumber}</span>
+            <span className="text-[color:var(--app-text)]">Chi tiết phòng {room.roomNumber}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Cột trái: Hình ảnh & Mô tả */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-gray-100 rounded-3xl overflow-hidden h-[500px] shadow-sm relative group">
+            <div className="bg-[color:var(--app-border)] rounded-3xl overflow-hidden h-[500px] shadow-sm relative group">
               <img src={selectedImage || 'https://placehold.co/1200x800?text=No+Image'} alt="Main View" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
             </div>
             {room.images && room.images.length > 0 && (
@@ -143,42 +143,42 @@ export default function RoomDetailPage() {
                 {room.images.map((img) => {
                   const fullUrl = resolveImageUrl(img.imageUrl);
                   return (
-                    <button key={img.id} onClick={() => setSelectedImage(fullUrl)} className={`relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-200 border-2 ${selectedImage === fullUrl ? 'border-indigo-600 opacity-100 scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+                    <button key={img.id} onClick={() => setSelectedImage(fullUrl)} className={`relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-200 border-2 ${selectedImage === fullUrl ? 'border-[color:var(--app-primary)] opacity-100 scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
                       <img src={fullUrl} alt="Thumbnail" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/120?text=Error'; }} />
                     </button>
                   );
                 })}
               </div>
             )}
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><span>📝</span> Mô tả chi tiết</h3>
-              <div className="prose max-w-none text-gray-600 leading-relaxed whitespace-pre-line">{room.description || 'Chưa có mô tả chi tiết.'}</div>
+            <div className="bg-[color:var(--app-surface-solid)] rounded-3xl p-8 shadow-sm border border-[color:var(--app-border)]">
+              <h3 className="text-2xl font-bold text-[color:var(--app-text)] mb-6 flex items-center gap-2"><span>📝</span> Mô tả chi tiết</h3>
+              <div className="prose max-w-none text-[color:var(--app-muted)] leading-relaxed whitespace-pre-line">{room.description || 'Chưa có mô tả chi tiết.'}</div>
             </div>
           </div>
 
           {/* Cột phải: Thông tin & Nút đặt */}
           <div className="lg:col-span-4">
-            <div className="sticky top-24 bg-white rounded-3xl p-8 shadow-xl shadow-indigo-100/50 border border-gray-100">
+            <div className="sticky top-24 bg-[color:var(--app-surface-solid)] rounded-3xl p-8 shadow-xl border border-[color:var(--app-border)]">
                 <div className="flex justify-between items-start mb-2">
-                  <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider bg-indigo-50 px-2 py-1 rounded-md">{room.branchCode}</p>
+                  <p className="text-sm font-bold text-[color:var(--app-primary)] uppercase tracking-wider bg-[color:var(--app-primary-soft)] px-2 py-1 rounded-md">{room.branchCode}</p>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1 ${room.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                     {room.status === 'AVAILABLE' ? (<><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Còn trống</>) : 'Đã thuê'}
                   </span>
                 </div>
-                <h1 className="text-3xl font-extrabold text-gray-900 mb-6 mt-4">Phòng {room.roomNumber}</h1>
-                <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-gray-100">
-                  <span className="text-4xl font-extrabold text-indigo-600">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}</span>
-                  <span className="text-gray-400 font-medium">/ tháng</span>
+                <h1 className="text-3xl font-extrabold text-[color:var(--app-text)] mb-6 mt-4">Phòng {room.roomNumber}</h1>
+                <div className="flex items-baseline gap-1 mb-8 pb-8 border-b border-[color:var(--app-border)]">
+                  <span className="text-4xl font-extrabold text-[color:var(--app-primary)]">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.price)}</span>
+                  <span className="text-[color:var(--app-muted-2)] font-medium">/ tháng</span>
                 </div>
                 <div className="space-y-4 mb-8">
-                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl"><span className="text-gray-500 text-sm">Diện tích</span><span className="font-bold text-gray-900">{room.area} m²</span></div>
-                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl"><span className="text-gray-500 text-sm">Loại phòng</span><span className="font-bold text-gray-900">Standard</span></div>
-                   <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl"><span className="text-gray-500 text-sm">Đặt cọc</span><span className="font-bold text-gray-900">1 tháng</span></div>
+                   <div className="flex justify-between items-center p-3 bg-[color:var(--app-bg)] rounded-xl border border-[color:var(--app-border)]"><span className="text-[color:var(--app-muted)] text-sm">Diện tích</span><span className="font-bold text-[color:var(--app-text)]">{room.area} m²</span></div>
+                   <div className="flex justify-between items-center p-3 bg-[color:var(--app-bg)] rounded-xl border border-[color:var(--app-border)]"><span className="text-[color:var(--app-muted)] text-sm">Loại phòng</span><span className="font-bold text-[color:var(--app-text)]">Standard</span></div>
+                   <div className="flex justify-between items-center p-3 bg-[color:var(--app-bg)] rounded-xl border border-[color:var(--app-border)]"><span className="text-[color:var(--app-muted)] text-sm">Đặt cọc</span><span className="font-bold text-[color:var(--app-text)]">1 tháng</span></div>
                 </div>
                 
                 <button 
                   disabled={room.status !== 'AVAILABLE'}
-                  className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-200 shadow-lg transform active:scale-[0.98] ${room.status === 'AVAILABLE' ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-200 shadow-lg transform active:scale-[0.98] ${room.status === 'AVAILABLE' ? 'bg-[color:var(--app-primary)] text-white hover:bg-[color:var(--app-primary-hover)]' : 'bg-[color:var(--app-border)] text-[color:var(--app-muted-2)] cursor-not-allowed'}`}
                   onClick={handleBookClick}
                 >
                   {room.status === 'AVAILABLE' ? 'Đặt Lịch Xem Phòng 📅' : 'Đã Được Thuê 🔒'}
@@ -190,21 +190,21 @@ export default function RoomDetailPage() {
         {/* --- MODAL XÁC NHẬN ĐẶT PHÒNG --- */}
         {showBookingModal && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in-up">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Xác nhận lịch tham khảo</h3>
+            <div className="bg-[color:var(--app-surface-solid)] rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in-up border border-[color:var(--app-border)]">
+            <h3 className="text-xl font-bold text-[color:var(--app-text)] mb-4 border-b border-[color:var(--app-border)] pb-2">Xác nhận lịch tham khảo</h3>
                     
-                    <div className="space-y-4 mb-6 text-sm text-gray-600">
-                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <div className="flex justify-between mb-1"><span>Phòng:</span><span className="font-bold text-gray-900">{room.roomNumber} ({room.branchCode})</span></div>
-                            <div className="flex justify-between"><span>Giá thuê:</span><span className="font-medium text-indigo-600">{room.price.toLocaleString()} đ/tháng</span></div>
+              <div className="space-y-4 mb-6 text-sm text-[color:var(--app-muted)]">
+                <div className="bg-[color:var(--app-bg)] p-3 rounded-lg border border-[color:var(--app-border)]">
+                  <div className="flex justify-between mb-1"><span>Phòng:</span><span className="font-bold text-[color:var(--app-text)]">{room.roomNumber} ({room.branchCode})</span></div>
+                  <div className="flex justify-between"><span>Giá thuê:</span><span className="font-medium text-[color:var(--app-primary)]">{room.price.toLocaleString()} đ/tháng</span></div>
                         </div>
 
                         {/* Ngày đến tham khảo */}
                         <div>
-                            <label className="block text-gray-700 font-medium mb-1">Ngày đến tham khảo (*)</label>
+                            <label className="block text-[color:var(--app-text)] font-medium mb-1">Ngày đến tham khảo (*)</label>
                             <select
                               required
-                              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                              className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-surface-solid)] text-[color:var(--app-text)] rounded-lg p-2 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
                               value={bookingData.visitDate}
                               onChange={(e) => setBookingData({ ...bookingData, visitDate: e.target.value })}
                             >
@@ -214,14 +214,14 @@ export default function RoomDetailPage() {
                                 </option>
                               ))}
                             </select>
-                            <p className="text-xs text-gray-500 mt-1">Chỉ cho phép đặt lịch trong 1–3 ngày tới (nếu rơi T7/CN sẽ tự dời sang T2).</p>
+                            <p className="text-xs text-[color:var(--app-muted-2)] mt-1">Chỉ cho phép đặt lịch trong 1–3 ngày tới (nếu rơi T7/CN sẽ tự dời sang T2).</p>
                         </div>
 
                         {/* Khung giờ */}
                         <div>
-                            <label className="block text-gray-700 font-medium mb-1">Giờ muốn đến (*)</label>
+                            <label className="block text-[color:var(--app-text)] font-medium mb-1">Giờ muốn đến (*)</label>
                             <select
-                              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                              className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-surface-solid)] text-[color:var(--app-text)] rounded-lg p-2 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none"
                               value={bookingData.visitSlot}
                               onChange={(e) => setBookingData({ ...bookingData, visitSlot: e.target.value })}
                             >
@@ -232,14 +232,14 @@ export default function RoomDetailPage() {
 
                         {/* Ghi chú */}
                         <div>
-                            <label className="block text-gray-700 font-medium mb-1">Ghi chú (Tùy chọn)</label>
-                            <textarea rows="2" className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ví dụ: Tôi muốn dọn vào cuối tuần..." value={bookingData.notes} onChange={(e) => setBookingData({...bookingData, notes: e.target.value})}></textarea>
+                          <label className="block text-[color:var(--app-text)] font-medium mb-1">Ghi chú (Tùy chọn)</label>
+                          <textarea rows="2" className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-surface-solid)] text-[color:var(--app-text)] rounded-lg p-2 focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none" placeholder="Ví dụ: Tôi muốn dọn vào cuối tuần..." value={bookingData.notes} onChange={(e) => setBookingData({...bookingData, notes: e.target.value})}></textarea>
                         </div>
                     </div>
 
                     <div className="flex gap-3">
-                        <button onClick={() => setShowBookingModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Hủy</button>
-                        <button onClick={handleConfirmBooking} disabled={bookingLoading} className="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex justify-center items-center">
+                      <button onClick={() => setShowBookingModal(false)} className="flex-1 px-4 py-2.5 bg-[color:var(--app-bg)] text-[color:var(--app-text)] font-bold rounded-xl hover:bg-[color:var(--app-border)] transition-colors border border-[color:var(--app-border)]">Hủy</button>
+                      <button onClick={handleConfirmBooking} disabled={bookingLoading} className="flex-1 px-4 py-2.5 bg-[color:var(--app-primary)] text-white font-bold rounded-xl hover:bg-[color:var(--app-primary-hover)] transition-colors shadow-lg disabled:opacity-50 flex justify-center items-center">
                             {bookingLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> : "Gửi yêu cầu"}
                         </button>
                     </div>

@@ -165,22 +165,22 @@ export default function MaintenanceRequests() {
         case 'IN_PROGRESS': return { bg: 'bg-blue-100', text: 'text-blue-800', label: '🛠️ Đang sửa chữa', border: 'border-blue-200' };
         case 'COMPLETED': return { bg: 'bg-green-100', text: 'text-green-800', label: '✅ Đã hoàn thành', border: 'border-green-200' };
         case 'REJECTED': return { bg: 'bg-red-100', text: 'text-red-800', label: '🚫 Bị từ chối', border: 'border-red-200' };
-        default: return { bg: 'bg-gray-100', text: 'text-gray-800', label: status, border: 'border-gray-200' };
+        default: return { bg: 'bg-[color:var(--app-bg)]', text: 'text-[color:var(--app-text)]', label: status, border: 'border-[color:var(--app-border)]' };
     }
   };
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header & Toggle Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-[color:var(--app-surface-solid)] p-6 rounded-2xl shadow-sm border border-[color:var(--app-border)]">
         <div>
-            <h2 className="text-2xl font-bold text-gray-800">🛠️ Yêu cầu bảo trì</h2>
-            <p className="text-gray-500 text-sm mt-1">Báo cáo các sự cố hỏng hóc để được hỗ trợ kịp thời.</p>
+            <h2 className="text-2xl font-bold text-[color:var(--app-text)]">🛠️ Yêu cầu bảo trì</h2>
+            <p className="text-[color:var(--app-muted)] text-sm mt-1">Báo cáo các sự cố hỏng hóc để được hỗ trợ kịp thời.</p>
         </div>
         <button 
           onClick={() => setIsFormOpen(!isFormOpen)}
           className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all flex items-center gap-2 transform active:scale-95
-            ${isFormOpen ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+            ${isFormOpen ? 'bg-[color:var(--app-bg)] text-[color:var(--app-text)] hover:bg-[color:var(--app-border)] border border-[color:var(--app-border)]' : 'bg-[color:var(--app-primary)] text-white hover:bg-[color:var(--app-primary-hover)]'}`}
         >
           {isFormOpen ? '✖ Đóng biểu mẫu' : '＋ Tạo yêu cầu mới'}
         </button>
@@ -188,39 +188,39 @@ export default function MaintenanceRequests() {
 
       {/* Form Gửi Yêu Cầu */}
       {isFormOpen && (
-        <div className="bg-white p-8 rounded-2xl border border-indigo-100 shadow-xl animate-fade-in-down">
-          <h3 className="font-bold text-gray-800 text-xl mb-6 flex items-center gap-2 border-b pb-4">
+        <div className="bg-[color:var(--app-surface-solid)] p-8 rounded-2xl border border-[color:var(--app-border)] shadow-xl animate-fade-in-down">
+          <h3 className="font-bold text-[color:var(--app-text)] text-xl mb-6 flex items-center gap-2 border-b border-[color:var(--app-border)] pb-4">
             📝 Thông tin sự cố
           </h3>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Mã chi nhánh <span className="text-red-500">*</span></label>
-                <input required className="w-full border-gray-300 rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white" 
+                <label className="block text-sm font-semibold text-[color:var(--app-text)] mb-2">Mã chi nhánh <span className="text-red-500">*</span></label>
+                <input required className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-bg)] text-[color:var(--app-text)] rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none transition-all" 
                     placeholder="VD: CN01" 
                     value={formData.branchCode} 
                     onChange={e => setFormData({...formData, branchCode: e.target.value})} 
                 />
                 {activeContract?.branchCode ? (
-                  <div className="text-xs text-gray-500 mt-1">Tự động lấy từ hợp đồng đang hiệu lực.</div>
+                  <div className="text-xs text-[color:var(--app-muted-2)] mt-1">Tự động lấy từ hợp đồng đang hiệu lực.</div>
                 ) : null}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Số phòng <span className="text-red-500">*</span></label>
-                <input required className="w-full border-gray-300 rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white" 
+                <label className="block text-sm font-semibold text-[color:var(--app-text)] mb-2">Số phòng <span className="text-red-500">*</span></label>
+                <input required className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-bg)] text-[color:var(--app-text)] rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none transition-all" 
                     placeholder="VD: 101" 
                     value={formData.roomNumber} 
                     onChange={e => setFormData({...formData, roomNumber: e.target.value})} 
                 />
                 {activeContract?.roomNumber || activeContract?.roomCode ? (
-                  <div className="text-xs text-gray-500 mt-1">Tự động lấy từ hợp đồng đang hiệu lực.</div>
+                  <div className="text-xs text-[color:var(--app-muted-2)] mt-1">Tự động lấy từ hợp đồng đang hiệu lực.</div>
                 ) : null}
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Mô tả chi tiết <span className="text-red-500">*</span></label>
-              <textarea required rows="4" className="w-full border-gray-300 rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white" 
+              <label className="block text-sm font-semibold text-[color:var(--app-text)] mb-2">Mô tả chi tiết <span className="text-red-500">*</span></label>
+              <textarea required rows="4" className="w-full border border-[color:var(--app-border-strong)] bg-[color:var(--app-bg)] text-[color:var(--app-text)] rounded-xl p-3 shadow-sm focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] outline-none transition-all" 
                 placeholder="Mô tả chi tiết sự cố bạn đang gặp phải (vị trí, tình trạng...)" 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})} 
@@ -229,16 +229,16 @@ export default function MaintenanceRequests() {
             
             {/* Upload Area */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[color:var(--app-text)] mb-2">
                 Hình ảnh đính kèm ({selectedFiles.length}/5)
               </label>
               
               <div className="flex flex-wrap gap-4">
                  {/* Nút chọn ảnh */}
                  {selectedFiles.length < 5 && (
-                    <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-                        <span className="text-2xl text-gray-400">+</span>
-                        <span className="text-xs text-gray-500 font-medium">Thêm ảnh</span>
+                    <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--app-border-strong)] bg-[color:var(--app-bg)] rounded-xl cursor-pointer hover:border-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-soft)] transition-colors">
+                        <span className="text-2xl text-[color:var(--app-muted-2)]">+</span>
+                        <span className="text-xs text-[color:var(--app-muted)] font-medium">Thêm ảnh</span>
                         <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                     </label>
                  )}
@@ -249,7 +249,7 @@ export default function MaintenanceRequests() {
                         <img 
                             src={url} 
                             alt="Preview" 
-                            className="w-full h-full object-cover rounded-xl border border-gray-200 shadow-sm"
+                      className="w-full h-full object-cover rounded-xl border border-[color:var(--app-border)] shadow-sm"
                         />
                         {/* Nút xóa ảnh */}
                         <button 
@@ -264,9 +264,9 @@ export default function MaintenanceRequests() {
               </div>
             </div>
             
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <button type="button" onClick={() => setIsFormOpen(false)} className="px-6 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-bold transition-colors">Hủy bỏ</button>
-              <button type="submit" className="px-8 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-bold shadow-lg shadow-indigo-200 transition-transform active:scale-95">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--app-border)]">
+              <button type="button" onClick={() => setIsFormOpen(false)} className="px-6 py-2.5 text-[color:var(--app-text)] hover:bg-[color:var(--app-bg)] rounded-xl font-bold transition-colors border border-[color:var(--app-border)]">Hủy bỏ</button>
+              <button type="submit" className="px-8 py-2.5 bg-[color:var(--app-primary)] text-white hover:bg-[color:var(--app-primary-hover)] rounded-xl font-bold shadow-lg transition-transform active:scale-95">
                 🚀 Gửi yêu cầu
               </button>
             </div>
@@ -276,49 +276,49 @@ export default function MaintenanceRequests() {
 
       {/* Danh sách yêu cầu */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-700 mb-4 px-2">Lịch sử yêu cầu ({requests.length})</h3>
+        <h3 className="text-lg font-bold text-[color:var(--app-text)] mb-4 px-2">Lịch sử yêu cầu ({requests.length})</h3>
         
         {requests.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+          <div className="text-center py-12 bg-[color:var(--app-surface-solid)] rounded-2xl border border-dashed border-[color:var(--app-border-strong)]">
                 <span className="text-4xl block mb-3">📭</span>
-                <p className="text-gray-500">Bạn chưa có yêu cầu bảo trì nào.</p>
+            <p className="text-[color:var(--app-muted)]">Bạn chưa có yêu cầu bảo trì nào.</p>
             </div>
         ) : (
             requests.map(req => {
                 const status = getStatusConfig(req.status);
                 return (
-                    <div key={req.id} className={`bg-white p-6 rounded-2xl shadow-sm border-l-4 ${status.border} flex flex-col md:flex-row gap-6 hover:shadow-md transition-all`}>
+              <div key={req.id} className={`bg-[color:var(--app-surface-solid)] p-6 rounded-2xl shadow-sm border border-[color:var(--app-border)] border-l-4 ${status.border} flex flex-col md:flex-row gap-6 hover:shadow-md transition-all`}>
                         {/* Thông tin chính */}
                         <div className="flex-1 space-y-3">
                             <div className="flex items-center justify-between md:justify-start gap-3">
-                                <h4 className="text-lg font-bold text-gray-900">Phòng {req.roomNumber}</h4>
+                    <h4 className="text-lg font-bold text-[color:var(--app-text)]">Phòng {req.roomNumber}</h4>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${status.bg} ${status.text} ${status.border}`}>
                                     {status.label}
                                 </span>
                             </div>
                             
-                            <p className="text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p className="text-[color:var(--app-muted)] leading-relaxed bg-[color:var(--app-bg)] p-3 rounded-lg border border-[color:var(--app-border)]">
                                 {req.description}
                             </p>
 
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 mt-2">
+                  <div className="flex flex-wrap gap-4 text-xs text-[color:var(--app-muted)] mt-2">
                                 <div className="flex items-center gap-1">
                                     <span>📅 Ngày gửi:</span>
-                                    <span className="font-medium text-gray-700">{new Date(req.createdAt).toLocaleDateString('vi-VN')}</span>
+                      <span className="font-medium text-[color:var(--app-text)]">{new Date(req.createdAt).toLocaleDateString('vi-VN')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span>🔖 Mã phiếu:</span>
-                                    <span className="font-mono bg-gray-100 px-1 rounded">{req.requestCode}</span>
+                      <span className="font-mono bg-[color:var(--app-bg)] px-1 rounded border border-[color:var(--app-border)]">{req.requestCode}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span>🏢 Chi nhánh:</span>
-                                    <span className="font-medium text-gray-700">{req.branchCode || 'N/A'}</span>
+                      <span className="font-medium text-[color:var(--app-text)]">{req.branchCode || 'N/A'}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Cột phải: Hình ảnh & Kỹ thuật viên */}
-                        <div className="flex flex-col justify-between items-start md:items-end min-w-[200px] border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
+                        <div className="flex flex-col justify-between items-start md:items-end min-w-[200px] border-t md:border-t-0 md:border-l border-[color:var(--app-border)] pt-4 md:pt-0 md:pl-6">
                             {/* Hiển thị ảnh nhỏ */}
                             {req.images && req.images.length > 0 ? (
                                 <div className="flex gap-2 mb-4">
@@ -327,20 +327,20 @@ export default function MaintenanceRequests() {
                                             key={idx} 
                                             src={getImageUrl(img)} 
                                             alt="Proof" 
-                                            className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:border-indigo-500 transition-colors"
+                                  className="w-12 h-12 object-cover rounded-lg border border-[color:var(--app-border)] cursor-zoom-in hover:border-[color:var(--app-primary)] transition-colors"
                                             onClick={() => setZoomImage(getImageUrl(img))}
                                             title="Nhấn để phóng to"
                                         />
                                     ))}
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400 italic mb-4">Không có hình ảnh</span>
+                            <span className="text-xs text-[color:var(--app-muted-2)] italic mb-4">Không có hình ảnh</span>
                             )}
 
                             {/* Thông tin xử lý */}
                             <div className="text-right w-full">
-                                <p className="text-xs text-gray-500">Người xử lý:</p>
-                                <p className="font-bold text-sm text-gray-800 mb-1">{req.technicianName || '---'}</p>
+                              <p className="text-xs text-[color:var(--app-muted)]">Người xử lý:</p>
+                              <p className="font-bold text-sm text-[color:var(--app-text)] mb-1">{req.technicianName || '---'}</p>
                                 
                                 {req.cost > 0 && (
                                     <div className="mt-2 bg-green-50 px-3 py-1 rounded-lg text-right inline-block">
@@ -370,7 +370,7 @@ export default function MaintenanceRequests() {
                     onClick={(e) => e.stopPropagation()} // Click vào ảnh không đóng
                 />
                 <button 
-                    className="absolute -top-4 -right-4 bg-white text-black rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-lg hover:bg-gray-200"
+              className="absolute -top-4 -right-4 bg-[color:var(--app-surface-solid)] text-[color:var(--app-text)] rounded-full w-8 h-8 flex items-center justify-center font-bold shadow-lg border border-[color:var(--app-border)] hover:bg-[color:var(--app-bg)]"
                     onClick={() => setZoomImage(null)}
                 >
                     ✕

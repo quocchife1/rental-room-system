@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // Import hook lấy địa chỉ URL
 import Header from './Header';
 import Footer from './Footer';
-import SeasonalEffects from './SeasonalEffects';
 
 export default function MainLayout({ children }) {
   const { pathname } = useLocation();
@@ -17,12 +16,9 @@ export default function MainLayout({ children }) {
   }, [pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-gray-800 bg-stone-50 relative">
-      {/* Hiệu ứng mùa lễ hội */}
-      <SeasonalEffects />
-      
+    <div className="flex flex-col min-h-screen font-sans bg-[color:var(--app-bg)] text-[color:var(--app-text)] relative">
       <Header />
-      <main className="flex-grow z-10">
+      <main className="flex-grow">
         {children}
       </main>
       <Footer />

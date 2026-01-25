@@ -2,4 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-gray-50; }
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+html,
+body,
+#root {
+	height: 100%;
+}
+
+:root {
+	/* Theme Cơ bản (Default) — Alpha Brand palette */
+	--app-bg: #F8FAFC; /* Background */
+	--app-text: #0F172A; /* Heading */
+	--app-muted: #475569; /* Body text */
+	--app-muted-2: #64748B; /* Secondary text */
+	--app-surface: rgba(255, 255, 255, 0.90);
+	--app-surface-solid: #FFFFFF;
+	--app-border: #E2E8F0; /* slate-200 */
+	--app-border-strong: #CBD5E1; /* slate-300 */
+	--app-primary: #122C46; /* Alpha Navy */
+	--app-primary-hover: #163554; /* Navy hover */
+	--app-primary-soft: rgba(18, 44, 70, 0.10);
+	--app-wave: rgba(43, 150, 204, 0.16); /* Alpha Cyan (soft) */
+	--app-hero-from: #2B96CC; /* Alpha Cyan */
+	--app-hero-to: #122C46; /* Alpha Navy */
+
+	/* Accent / CTA */
+	--app-accent: #F37021; /* Burnt Orange */
+	--app-accent-soft: rgba(243, 112, 33, 0.14);
+
+}
+
+[data-theme='default'] {
+	--app-bg: #F8FAFC;
+	--app-text: #0F172A;
+	--app-muted: #475569;
+	--app-muted-2: #64748B;
+	--app-surface: rgba(255, 255, 255, 0.90);
+	--app-surface-solid: #FFFFFF;
+	--app-border: #E2E8F0;
+	--app-border-strong: #CBD5E1;
+	--app-primary: #122C46;
+	--app-primary-hover: #163554;
+	--app-primary-soft: rgba(18, 44, 70, 0.10);
+	--app-wave: rgba(43, 150, 204, 0.16);
+	--app-hero-from: #2B96CC;
+	--app-hero-to: #122C46;
+	--app-accent: #F37021;
+	--app-accent-soft: rgba(243, 112, 33, 0.14);
+}
+
+[data-theme='christmas'] {
+	--app-bg: #fff7ed; /* warm */
+	--app-text: #064e3b; /* emerald-900 */
+	--app-muted: #065f46; /* emerald-800 */
+	--app-muted-2: rgba(6, 95, 70, 0.70);
+	--app-surface: rgba(255, 255, 255, 0.92);
+	--app-surface-solid: #ffffff;
+	--app-border: rgba(220, 38, 38, 0.10);
+	--app-border-strong: rgba(220, 38, 38, 0.18);
+	--app-primary: #dc2626; /* red-600 */
+	--app-primary-hover: #b91c1c; /* red-700 */
+	--app-primary-soft: rgba(220, 38, 38, 0.10);
+	--app-wave: rgba(6, 95, 70, 0.10);
+	--app-hero-from: #b91c1c; /* red-700 */
+	--app-hero-to: #065f46; /* emerald-800 */
+}
+
+[data-theme='summer'] {
+	/* Summer (cooler + comfy): ưu tiên xanh biển, giữ hoàng hôn nhẹ */
+	--app-bg: #F6FFFE;
+	--app-text: #0C4A6E; /* Deep Ocean */
+	--app-muted: #155E75;
+	--app-muted-2: rgba(21, 94, 117, 0.65);
+	--app-surface: rgba(255, 255, 255, 0.88);
+	--app-surface-solid: #ffffff;
+	--app-border: rgba(45, 212, 191, 0.22);
+	--app-border-strong: rgba(45, 212, 191, 0.34);
+
+	/* PRIMARY: Turquoise (mát, dễ chịu khi browse) */
+	--app-primary: #2DD4BF;
+	--app-primary-hover: #14B8A6;
+	--app-primary-soft: rgba(45, 212, 191, 0.14);
+
+	/* Secondary: Coral (CTA/điểm nhấn nếu cần) */
+	--app-secondary: #F97316;
+	--app-secondary-hover: #EA580C;
+	--app-secondary-soft: rgba(249, 115, 22, 0.12);
+
+	/* Sóng biển */
+	--app-wave: rgba(45, 212, 191, 0.22);
+
+	/* Hero: hoàng hôn nhẹ hơn (đỡ nóng) */
+	--app-hero-from: #FB7185;
+	--app-hero-to: #FDBA74;
+
+	/* Accent: Vàng chanh */
+	--app-accent: #FACC15;
+	--app-accent-soft: rgba(250, 204, 21, 0.14);
+
+	/* Beach: cát vàng dịu (không quá nóng) */
+	--app-sand: #FFF7ED;
+	--app-sand-2: #FED7AA;
+	--app-sand-shadow: rgba(124, 45, 18, 0.35);
+	--app-foam: #FFF7ED;
+}
+
+body {
+	background-color: var(--app-bg);
+	color: var(--app-text);
+}
+
+/* Improve theme switch smoothness by temporarily disabling expensive effects
+   on the app content while the transition overlay runs. */
+.theme-transitioning .backdrop-blur-sm,
+.theme-transitioning .backdrop-blur-md,
+.theme-transitioning .backdrop-blur-xl {
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+	transition-duration: 0ms !important;
+	animation-play-state: paused !important;
+}

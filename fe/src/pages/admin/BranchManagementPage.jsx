@@ -171,7 +171,7 @@ export default function BranchManagementPage() {
                 <input
                   value={form.branchName}
                   onChange={(e) => setForm((p) => ({ ...p, branchName: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--app-primary-soft)]"
                   placeholder="Ví dụ: Chi nhánh Quận 1"
                 />
               </div>
@@ -181,7 +181,7 @@ export default function BranchManagementPage() {
                 <input
                   value={form.address}
                   onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--app-primary-soft)]"
                   placeholder="Ví dụ: 123 Nguyễn Văn Cừ, Q5"
                 />
               </div>
@@ -191,7 +191,7 @@ export default function BranchManagementPage() {
                 <input
                   value={form.phoneNumber}
                   onChange={(e) => setForm((p) => ({ ...p, phoneNumber: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--app-primary-soft)]"
                   placeholder="Ví dụ: 0281234567"
                 />
               </div>
@@ -199,7 +199,7 @@ export default function BranchManagementPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-xl bg-indigo-600 text-white font-bold py-2.5 hover:bg-indigo-700 disabled:opacity-60"
+                className="w-full rounded-xl bg-[color:var(--app-primary)] text-white font-bold py-2.5 hover:bg-[color:var(--app-primary-hover)] disabled:opacity-60"
               >
                 {saving ? 'Đang lưu...' : isEditing ? 'Cập nhật' : 'Tạo chi nhánh'}
               </button>

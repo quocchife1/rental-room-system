@@ -295,7 +295,7 @@ export default function AuditLogsPage() {
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                          <span className="px-2 py-1 rounded bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] text-xs font-semibold">
                             {it.targetType ?? '-'}
                           </span>
                           <span className="text-gray-700 font-medium">#{it.targetId ?? '-'}</span>

@@ -165,7 +165,7 @@ export default function ManagerCleaningBookingsPage() {
                 {loading && items.length === 0 ? (
                    <tr>
                      <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
-                       <div className="flex justify-center mb-2"><div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>
+                       <div className="flex justify-center mb-2"><div className="w-6 h-6 border-2 border-[color:var(--app-primary)] border-t-transparent rounded-full animate-spin"></div></div>
                        Đang tải danh sách...
                      </td>
                    </tr>
@@ -193,8 +193,8 @@ export default function ManagerCleaningBookingsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 font-bold text-indigo-900">
-                          <Icons.Home className="w-4 h-4 text-indigo-400" />
+                        <div className="flex items-center gap-2 font-bold text-[color:var(--app-primary)]">
+                          <Icons.Home className="w-4 h-4 text-[color:var(--app-primary)]/60" />
                           {row.roomNumber || row.roomCode || 'N/A'}
                         </div>
                         <div className="text-xs text-slate-400 mt-1 pl-6">

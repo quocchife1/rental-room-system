@@ -157,7 +157,7 @@ export default function PartnerDashboard() {
               <span className="text-xl">🎉</span>
               <div>
                 <p className="text-sm font-bold text-gray-700">Chào mừng đối tác</p>
-                <p className="text-xs text-gray-500 mt-1">Cảm ơn bạn đã đồng hành cùng UML Rental.</p>
+                <p className="text-xs text-gray-500 mt-1">Cảm ơn bạn đã đồng hành cùng Alpha.</p>
               </div>
             </div>
           </div>

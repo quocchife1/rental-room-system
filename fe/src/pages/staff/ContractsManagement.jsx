@@ -103,7 +103,7 @@ export default function ContractsManagement() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold">Quản lý hợp đồng</h1>
         <button
-          className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm"
+          className="px-4 py-2 rounded-lg bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white text-sm"
           onClick={() => navigate('/staff/contracts/create')}
         >
           Tạo hợp đồng
@@ -137,7 +137,7 @@ export default function ContractsManagement() {
               if (e.key === 'Enter') runSearch();
             }}
           />
-          <button className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm" onClick={runSearch}>
+          <button className="px-4 py-2 rounded-lg bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white text-sm" onClick={runSearch}>
             Tra cứu
           </button>
         </div>
@@ -176,7 +176,7 @@ export default function ContractsManagement() {
                     {c.status === 'PENDING' && (
                       <>
                         <button
-                          className="px-3 py-1 rounded bg-indigo-600 text-white mr-2"
+                          className="px-3 py-1 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white mr-2"
                           onClick={() => navigate(`/staff/contracts/create?contractId=${c.id}`)}
                         >
                           Hoàn thiện
@@ -192,7 +192,7 @@ export default function ContractsManagement() {
 
                     {c.status === 'SIGNED_PENDING_DEPOSIT' && (
                       <button
-                        className="px-3 py-1 rounded bg-indigo-600 text-white"
+                        className="px-3 py-1 rounded bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white"
                         onClick={() => navigate(`/staff/contracts/create?contractId=${c.id}`)}
                       >
                         Thanh toán cọc

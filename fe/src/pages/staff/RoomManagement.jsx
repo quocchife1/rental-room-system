@@ -25,7 +25,7 @@ const STATUS_META = {
   },
   RESERVED: { 
     label: 'Đã đặt', 
-    color: 'text-violet-700 bg-violet-50 border-violet-200'
+    color: 'text-[color:var(--app-primary)] bg-[color:var(--app-primary-soft)] border-[color:var(--app-border)]'
   },
 };
 
@@ -271,7 +271,7 @@ export default function RoomManagement() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm"
+                className="bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm"
               >
                 Tạo phòng
               </button>
@@ -299,7 +299,7 @@ export default function RoomManagement() {
         {/* LOADING STATE */}
         {loading && (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--app-primary)]"></div>
           </div>
         )}
 
@@ -307,7 +307,7 @@ export default function RoomManagement() {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map(room => (
-              <div key={room.id} className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-200 flex flex-col overflow-hidden">
+              <div key={room.id} className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-[color:var(--app-primary-soft)] transition-all duration-200 flex flex-col overflow-hidden">
                 
                 {/* Card Header */}
                 <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
@@ -315,7 +315,7 @@ export default function RoomManagement() {
                     <StatusBadge status={room.status} />
                     <button 
                       onClick={() => openEdit(room)}
-                      className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
+                      className="text-gray-400 hover:text-[color:var(--app-primary)] p-1.5 rounded-full hover:bg-[color:var(--app-primary-soft)] transition-colors"
                       title="Chỉnh sửa"
                     >
                       <Edit3 size={18} />
@@ -336,7 +336,7 @@ export default function RoomManagement() {
                 {/* Card Body */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <div className="text-2xl font-bold text-indigo-600">
+                    <div className="text-2xl font-bold text-[color:var(--app-primary)]">
                       {new Intl.NumberFormat('vi-VN').format(room.price || 0)}
                       <span className="text-sm font-normal text-slate-500 ml-1">đ/tháng</span>
                     </div>
@@ -353,7 +353,7 @@ export default function RoomManagement() {
                       { s: 'AVAILABLE', color: 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200' },
                       { s: 'OCCUPIED', color: 'hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200' },
                       { s: 'MAINTENANCE', color: 'hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200' },
-                      { s: 'RESERVED', color: 'hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200' }
+                      { s: 'RESERVED', color: 'hover:bg-[color:var(--app-primary-soft)] hover:text-[color:var(--app-primary)] hover:border-[color:var(--app-border)]' }
                     ].map(({s, color}) => {
                        const active = room.status === s;
                        const statusLocked = room.status === 'OCCUPIED' || room.status === 'RESERVED';
@@ -429,7 +429,7 @@ export default function RoomManagement() {
                     <p className="text-xs text-slate-500 mb-4">Thông tin tiện ích, đặc điểm nổi bật của phòng.</p>
                     
                     <textarea
-                      className="w-full border-gray-200 rounded-lg px-4 py-3 min-h-[200px] text-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-all resize-y"
+                      className="w-full border-gray-200 rounded-lg px-4 py-3 min-h-[200px] text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)] bg-gray-50 focus:bg-white transition-all resize-y"
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="Nhập mô tả chi tiết..."
@@ -438,7 +438,7 @@ export default function RoomManagement() {
                     <div className="mt-4 flex justify-end">
                       <button
                         className={`flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-lg text-white shadow-sm transition-all
-                          ${savingDesc ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md active:translate-y-0.5'}
+                          ${savingDesc ? 'bg-[color:var(--app-primary)] opacity-60 cursor-not-allowed' : 'bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] hover:shadow-md active:translate-y-0.5'}
                         `}
                         onClick={saveDescription}
                         disabled={savingDesc}
@@ -456,7 +456,7 @@ export default function RoomManagement() {
                         <p className="text-xs text-slate-500">{sortedImages.length} ảnh đã tải lên</p>
                       </div>
                       <label className={`
-                        flex items-center gap-2 cursor-pointer bg-white border border-gray-300 hover:border-indigo-500 hover:text-indigo-600 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm
+                        flex items-center gap-2 cursor-pointer bg-white border border-gray-300 hover:border-[color:var(--app-primary)] hover:text-[color:var(--app-primary)] text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm
                         ${uploading ? 'opacity-50 cursor-wait' : ''}
                       `}>
                         <UploadCloud size={16} />
@@ -474,7 +474,7 @@ export default function RoomManagement() {
 
                     {uploading && (
                       <div className="mb-4 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-indigo-600 h-1.5 rounded-full animate-progress w-2/3"></div>
+                        <div className="bg-[color:var(--app-primary)] h-1.5 rounded-full animate-progress w-2/3"></div>
                       </div>
                     )}
 
@@ -565,7 +565,7 @@ export default function RoomManagement() {
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Chi nhánh</label>
                     <select
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)]"
                       value={createForm.branchCode}
                       onChange={(e) => setCreateForm((p) => ({ ...p, branchCode: e.target.value }))}
                     >
@@ -581,7 +581,7 @@ export default function RoomManagement() {
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Số phòng</label>
                     <input
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)]"
                       value={createForm.roomNumber}
                       onChange={(e) => setCreateForm((p) => ({ ...p, roomNumber: e.target.value }))}
                       placeholder="Ví dụ: 101"
@@ -593,7 +593,7 @@ export default function RoomManagement() {
                     <input
                       type="number"
                       min="0"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)]"
                       value={createForm.area}
                       onChange={(e) => setCreateForm((p) => ({ ...p, area: e.target.value }))}
                       placeholder="Ví dụ: 20"
@@ -605,7 +605,7 @@ export default function RoomManagement() {
                     <input
                       type="number"
                       min="0"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)]"
                       value={createForm.price}
                       onChange={(e) => setCreateForm((p) => ({ ...p, price: e.target.value }))}
                       placeholder="Ví dụ: 2500000"
@@ -615,7 +615,7 @@ export default function RoomManagement() {
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Trạng thái</label>
                     <select
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)]"
                       value={createForm.status}
                       onChange={(e) => setCreateForm((p) => ({ ...p, status: e.target.value }))}
                     >
@@ -629,7 +629,7 @@ export default function RoomManagement() {
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Mô tả</label>
                     <textarea
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[120px]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)] min-h-[120px]"
                       value={createForm.description}
                       onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
                       placeholder="Nhập mô tả (tuỳ chọn)"
@@ -647,7 +647,7 @@ export default function RoomManagement() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold disabled:opacity-60"
+                      className="px-5 py-2 rounded-lg bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white text-sm font-semibold disabled:opacity-60"
                       disabled={creating}
                     >
                       {creating ? 'Đang tạo...' : 'Tạo phòng'}

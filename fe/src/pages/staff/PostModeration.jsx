@@ -76,7 +76,7 @@ export default function PostModeration() {
       case 'VIP2':
         return { label: 'VIP 2 (Vàng)', cls: 'bg-amber-50 text-amber-700 border border-amber-100' };
       case 'VIP3':
-        return { label: 'VIP 3 (Kim cương)', cls: 'bg-purple-50 text-purple-700 border border-purple-100' };
+        return { label: 'VIP 3 (Kim cương)', cls: 'bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] border border-[color:var(--app-border)]' };
       case 'NORMAL':
       default:
         return { label: 'Tin thường', cls: 'bg-gray-50 text-gray-700 border border-gray-100' };
@@ -136,7 +136,7 @@ export default function PostModeration() {
         </div>
         <div className="bg-white border rounded-xl p-3 text-sm">
           <div className="text-gray-500">Duyệt hôm nay</div>
-          <div className="text-xl font-semibold text-indigo-700">{stats.approvedToday}</div>
+          <div className="text-xl font-semibold text-[color:var(--app-primary)]">{stats.approvedToday}</div>
         </div>
       </div>
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
@@ -148,7 +148,7 @@ export default function PostModeration() {
           ].map(tab => (
             <button
               key={tab.key}
-              className={`px-4 py-2 text-sm ${status === tab.key ? 'bg-indigo-600 text-white' : 'bg-white hover:bg-gray-50'}`}
+              className={`px-4 py-2 text-sm ${status === tab.key ? 'bg-[color:var(--app-primary)] text-white' : 'bg-white hover:bg-gray-50'}`}
               onClick={() => setStatus(tab.key)}
             >{tab.label}</button>
           ))}
@@ -217,7 +217,7 @@ export default function PostModeration() {
                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
                     <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 flex items-center justify-between">
                       <span>Giá</span>
-                      <b className="text-indigo-600">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(post.price)}</b>
+                      <b className="text-[color:var(--app-primary)]">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(post.price)}</b>
                     </div>
                     <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 flex items-center justify-between">
                       <span>Diện tích</span>
@@ -243,7 +243,7 @@ export default function PostModeration() {
                   )}
 
                   <div className="flex items-center justify-between mt-auto pt-1">
-                    <div className="text-indigo-600 font-bold text-sm">#{post.id}</div>
+                    <div className="text-[color:var(--app-primary)] font-bold text-sm">#{post.id}</div>
                     <div className="flex gap-2">
                       <button className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50" onClick={() => openDetail(post.id)}>Xem</button>
                       {status !== 'APPROVED' && (
@@ -315,7 +315,7 @@ export default function PostModeration() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
                       <span className="text-gray-500">Giá</span>
-                      <b className="text-indigo-700">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selected.price)}</b>
+                      <b className="text-[color:var(--app-primary)]">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selected.price)}</b>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
                       <span className="text-gray-500">Diện tích</span>
@@ -351,7 +351,7 @@ export default function PostModeration() {
                     </div>
                   )}
                   <label className="block text-sm font-semibold text-gray-800">Lý do từ chối (nếu có)</label>
-                  <textarea className="w-full border border-gray-200 rounded-xl p-3 min-h-[140px] text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300" value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Ví dụ: ảnh không rõ ràng, thông tin giá chưa hợp lệ" />
+                  <textarea className="w-full border border-gray-200 rounded-xl p-3 min-h-[140px] text-sm focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)]" value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Ví dụ: ảnh không rõ ràng, thông tin giá chưa hợp lệ" />
                   <div className="grid grid-cols-1 gap-2 pt-2">
                     <button className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700" onClick={() => approve(selected.id)}>Duyệt tin</button>
                     <button className="px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700" onClick={() => reject(selected.id)}>Từ chối tin</button>

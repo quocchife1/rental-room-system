@@ -14,12 +14,12 @@ export default function TenantLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[color:var(--app-bg)] text-[color:var(--app-text)] flex flex-col">
       <Header />
       <div className="flex flex-1 container mx-auto px-4 py-8 gap-6">
         <aside className="w-64 hidden md:block">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">Menu Sinh viên</h2>
+          <div className="bg-[color:var(--app-surface-solid)] rounded-xl shadow-sm border border-[color:var(--app-border)] p-4 sticky top-24">
+            <h2 className="text-xs font-bold text-[color:var(--app-muted-2)] uppercase tracking-wider mb-4 px-4">Menu Sinh viên</h2>
             <nav className="space-y-1">
               {menuItems.map((item) => (
                 <Link
@@ -27,8 +27,8 @@ export default function TenantLayout() {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm
                   ${location.pathname === item.path
-                    ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+                    ? 'bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] shadow-sm'
+                    : 'text-[color:var(--app-muted)] hover:bg-[color:var(--app-primary-soft)] hover:text-[color:var(--app-primary)]'}`}
                 >
                   <span>{item.icon}</span>
                   {item.label}

@@ -121,76 +121,76 @@ export default function TenantDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[color:var(--app-hero-from)] to-[color:var(--app-hero-to)] rounded-2xl p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold mb-2">Xin chào, {user?.fullName || user?.username}! 👋</h1>
         <p className="opacity-90">Chào mừng bạn quay trở lại hệ thống quản lý phòng trọ.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card Hóa đơn */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-[color:var(--app-surface-solid)] p-6 rounded-xl shadow-sm border border-[color:var(--app-border)] hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Hóa đơn chưa thanh toán</p>
+              <p className="text-sm text-[color:var(--app-muted)] font-medium">Hóa đơn chưa thanh toán</p>
               <h3 className="text-3xl font-bold text-red-600 mt-2">{stats.unpaidInvoices}</h3>
             </div>
             <span className="text-4xl p-2 bg-red-50 rounded-lg">💳</span>
           </div>
-          <Link to="/tenant/invoices" className="text-sm text-indigo-600 mt-4 inline-block hover:underline font-medium">Xem chi tiết &rarr;</Link>
+          <Link to="/tenant/invoices" className="text-sm text-[color:var(--app-primary)] mt-4 inline-block hover:underline font-medium">Xem chi tiết &rarr;</Link>
         </div>
 
         {/* Card Hợp đồng */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-[color:var(--app-surface-solid)] p-6 rounded-xl shadow-sm border border-[color:var(--app-border)] hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Hợp đồng hiệu lực</p>
+              <p className="text-sm text-[color:var(--app-muted)] font-medium">Hợp đồng hiệu lực</p>
               <h3 className="text-3xl font-bold text-green-600 mt-2">{stats.activeContracts}</h3>
             </div>
             <span className="text-4xl p-2 bg-green-50 rounded-lg">📝</span>
           </div>
-          <Link to="/tenant/contracts" className="text-sm text-indigo-600 mt-4 inline-block hover:underline font-medium">Xem hợp đồng &rarr;</Link>
+          <Link to="/tenant/contracts" className="text-sm text-[color:var(--app-primary)] mt-4 inline-block hover:underline font-medium">Xem hợp đồng &rarr;</Link>
         </div>
 
         {/* Card Giữ chỗ */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-[color:var(--app-surface-solid)] p-6 rounded-xl shadow-sm border border-[color:var(--app-border)] hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Giữ chỗ đang chờ</p>
+              <p className="text-sm text-[color:var(--app-muted)] font-medium">Giữ chỗ đang chờ</p>
               <h3 className="text-3xl font-bold text-yellow-600 mt-2">{stats.pendingReservations}</h3>
             </div>
             <span className="text-4xl p-2 bg-yellow-50 rounded-lg">⏳</span>
           </div>
-          <Link to="/tenant/reservations" className="text-sm text-indigo-600 mt-4 inline-block hover:underline font-medium">Xem lịch sử &rarr;</Link>
+          <Link to="/tenant/reservations" className="text-sm text-[color:var(--app-primary)] mt-4 inline-block hover:underline font-medium">Xem lịch sử &rarr;</Link>
         </div>
       </div>
 
       {/* Danh sách hóa đơn gần đây */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="font-bold text-gray-800">Hóa đơn gần đây</h3>
-          <Link to="/tenant/invoices" className="text-sm text-indigo-600 hover:text-indigo-800">Xem tất cả</Link>
+      <div className="bg-[color:var(--app-surface-solid)] rounded-xl shadow-sm border border-[color:var(--app-border)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[color:var(--app-border)] flex justify-between items-center">
+          <h3 className="font-bold text-[color:var(--app-text)]">Hóa đơn gần đây</h3>
+          <Link to="/tenant/invoices" className="text-sm text-[color:var(--app-primary)] hover:text-[color:var(--app-primary-hover)]">Xem tất cả</Link>
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-[color:var(--app-border)]">
           {recentInvoices.length > 0 ? recentInvoices.map((invoice) => (
-            <div key={invoice.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <div key={invoice.id} className="p-6 flex items-center justify-between hover:bg-[color:var(--app-bg)] transition-colors">
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${invoice.status === 'PAID' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                   $
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{getInvoiceTitle(invoice)}</p>
-                  <p className="text-sm text-gray-500">Hạn: {formatLocalDate(invoice.dueDate) || 'Đang cập nhật'}</p>
+                  <p className="font-medium text-[color:var(--app-text)]">{getInvoiceTitle(invoice)}</p>
+                  <p className="text-sm text-[color:var(--app-muted)]">Hạn: {formatLocalDate(invoice.dueDate) || 'Đang cập nhật'}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-gray-900">{formatMoneyVnd(invoice.amount)}</p>
+                <p className="font-bold text-[color:var(--app-text)]">{formatMoneyVnd(invoice.amount)}</p>
                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${invoice.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {invoice.status}
                 </span>
               </div>
             </div>
           )) : (
-            <div className="p-8 text-center text-gray-500">Chưa có hóa đơn nào</div>
+            <div className="p-8 text-center text-[color:var(--app-muted)]">Chưa có hóa đơn nào</div>
           )}
         </div>
       </div>

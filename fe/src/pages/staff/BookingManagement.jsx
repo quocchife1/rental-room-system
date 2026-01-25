@@ -6,7 +6,7 @@ import reservationApi from '../../api/reservationApi';
 const StatusBadge = ({ status }) => {
   const styles = {
     PENDING_CONFIRMATION: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'Chờ xác nhận', border: 'border-yellow-200' },
-    RESERVED: { bg: 'bg-indigo-50', text: 'text-indigo-700', label: 'Đã giữ chỗ', border: 'border-indigo-200' },
+    RESERVED: { bg: 'bg-[color:var(--app-primary-soft)]', text: 'text-[color:var(--app-primary)]', label: 'Đã giữ chỗ', border: 'border-[color:var(--app-border)]' },
     COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Hoàn tất', border: 'border-emerald-200' },
     NO_SHOW: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Không đến', border: 'border-gray-200' },
     CANCELLED: { bg: 'bg-red-50', text: 'text-red-600', label: 'Đã hủy', border: 'border-red-200' },
@@ -163,7 +163,7 @@ export default function BookingManagement() {
                   <Icons.Search />
                 </div>
                 <input
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors shadow-sm"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[color:var(--app-primary-soft)] focus:border-[color:var(--app-primary)] transition-colors shadow-sm"
                   placeholder="Tìm theo tên, SĐT, email hoặc mã..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,7 +171,7 @@ export default function BookingManagement() {
                 />
               </div>
               <button 
-                className="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95" 
+                className="px-6 py-2.5 rounded-lg bg-[color:var(--app-primary)] hover:bg-[color:var(--app-primary-hover)] text-white text-sm font-medium shadow-sm transition-all active:scale-95" 
                 onClick={runSearch}
               >
                 Tìm kiếm
@@ -184,7 +184,7 @@ export default function BookingManagement() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--app-primary)] mb-4"></div>
               <span>Đang tải dữ liệu...</span>
             </div>
           ) : requests.length === 0 ? (
@@ -212,7 +212,7 @@ export default function BookingManagement() {
                     <tr key={r.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-6 py-4 align-top">
                         <div className="flex items-center gap-2">
-                           <span className="font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs font-bold">
+                          <span className="font-mono text-[color:var(--app-primary)] bg-[color:var(--app-primary-soft)] px-2 py-0.5 rounded text-xs font-bold">
                              {r.reservationCode || `#${r.id}`}
                            </span>
                         </div>
@@ -278,7 +278,7 @@ export default function BookingManagement() {
                             <>
                               <button 
                                 onClick={() => goCreateContract(r.id)}
-                                className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 shadow-sm w-fit transition-all"
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-[color:var(--app-primary)] text-white rounded-lg text-xs font-bold hover:bg-[color:var(--app-primary-hover)] shadow-sm w-fit transition-all"
                               >
                                 <Icons.Contract /> Lập hợp đồng
                               </button>

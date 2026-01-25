@@ -5,18 +5,21 @@ import { useSelector } from 'react-redux';
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user } = useSelector((state) => state.auth);
 
-  // Debug: Xem log này trong Console của trình duyệt (F12)
-  console.log("Current User Role:", user?.role);
-  console.log("Allowed Roles:", allowedRoles);
-
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
   // Logic kiểm tra quyền
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    console.warn("Access Denied: Role mismatch");
-    return <Navigate to="/" replace />; 
+    // If a user is logged in but lacks permission for this route,
+    // send them to the most relevant portal entry.
+    const role = String(user?.role || '').toUpperCase();
+    const employeeRoles = ['ADMIN', 'DIRECTOR', 'MANAGER', 'ACCOUNTANT', 'RECEPTIONIST', 'MAINTENANCE', 'SECURITY'];
+    if (employeeRoles.includes(role)) return <Navigate to="/staff" replace />;
+    if (role === 'TENANT') return <Navigate to="/tenant" replace />;
+    if (role === 'PARTNER') return <Navigate to="/partner" replace />;
+    if (role === 'GUEST') return <Navigate to="/guest" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

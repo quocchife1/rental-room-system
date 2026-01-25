@@ -94,7 +94,7 @@ export default function SystemConfigurationPage() {
         </div>
         <input
           type={type}
-          className="block w-full rounded-lg border-slate-300 pl-10 pr-12 py-2.5 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-shadow"
+          className="block w-full rounded-lg border-slate-300 pl-10 pr-12 py-2.5 focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)] sm:text-sm transition-shadow"
           placeholder={placeholder}
           value={value}
           onChange={onChange}
@@ -130,7 +130,7 @@ export default function SystemConfigurationPage() {
             <button
               onClick={save}
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-70"
+              className="flex items-center gap-2 px-6 py-2 bg-[color:var(--app-primary)] text-white rounded-lg font-bold hover:bg-[color:var(--app-primary-hover)] transition-all shadow-md active:scale-95 disabled:opacity-70"
             >
               <Icons.Save />
               Lưu thay đổi
@@ -157,7 +157,7 @@ export default function SystemConfigurationPage() {
           {/* Card 1: Service Fees */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <span className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Icons.Lightning /></span>
+              <span className="p-2 bg-[color:var(--app-primary-soft)] text-[color:var(--app-primary)] rounded-lg"><Icons.Lightning /></span>
               <h2 className="font-bold text-lg text-slate-800">Chi phí dịch vụ & Phạt</h2>
             </div>
             <div className="p-6">
@@ -231,7 +231,7 @@ export default function SystemConfigurationPage() {
                     </div>
                     <input
                       type="text"
-                      className="block w-full rounded-lg border-slate-300 pl-10 py-2.5 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-full rounded-lg border-slate-300 pl-10 py-2.5 focus:border-[color:var(--app-primary)] focus:ring-[color:var(--app-primary-soft)] sm:text-sm"
                       placeholder="https://example.com/my-qr.png"
                       value={momoReceiverQrUrl}
                       onChange={(e) => setMomoReceiverQrUrl(e.target.value)}
@@ -268,7 +268,7 @@ export default function SystemConfigurationPage() {
         <div className="mt-8">
            <button 
              onClick={() => setShowRaw(!showRaw)} 
-             className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-wider"
+             className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[color:var(--app-primary)] transition-colors uppercase tracking-wider"
            >
              <Icons.Code />
              {showRaw ? 'Ẩn chi tiết kỹ thuật' : 'Xem chi tiết kỹ thuật (JSON)'}
