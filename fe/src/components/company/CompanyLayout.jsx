@@ -94,6 +94,7 @@ export default function CompanyLayout() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [employeeProfile, setEmployeeProfile] = useState(null);
 
   const canSeeFinance = ['ADMIN', 'DIRECTOR', 'MANAGER', 'ACCOUNTANT'].includes(role);
   const canSeeMaintenanceBoard = ['ADMIN', 'MAINTENANCE'].includes(role);
@@ -214,7 +215,7 @@ export default function CompanyLayout() {
 
     items.push({
       type: 'link',
-      to: '/profile',
+      to: '/staff/profile',
       label: 'Hồ sơ cá nhân',
       icon: Icons.Clipboard,
       visible: true,
@@ -293,6 +294,28 @@ export default function CompanyLayout() {
     return <Outlet />;
   }
 
+  React.useEffect(() => {
+    let alive = true;
+
+    const loadEmployeeProfile = async () => {
+      try {
+        const res = await userApi.getCurrentEmployeeProfile();
+        const data = res?.data?.result || res?.data || res || null;
+        if (alive) setEmployeeProfile(data || null);
+      } catch {
+        if (alive) setEmployeeProfile(null);
+      }
+    };
+
+    if (user?.id) {
+      loadEmployeeProfile();
+    }
+
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
+
   const sidebarWidth = collapsed ? 'w-[72px]' : 'w-[280px]';
 
   const linkBase =
@@ -303,6 +326,11 @@ export default function CompanyLayout() {
   const contentTitle = location.pathname.startsWith('/admin')
     ? 'Khu vực Admin'
     : 'Khu vực Nhân viên';
+
+  const employeeBranchCode = employeeProfile?.branch?.branchCode || user?.branchCode || '';
+  const employeeLabel = [user?.fullName || user?.username || 'Tài khoản nội bộ', employeeBranchCode ? `CN ${employeeBranchCode}` : null]
+    .filter(Boolean)
+    .join(' • ');
 
   return (
     // Force internal pages to use Default theme tokens (no seasonal palette)
@@ -452,6 +480,7 @@ export default function CompanyLayout() {
             </button>
             <div className="min-w-0">
               <div className="text-sm font-bold text-[color:var(--app-text)] truncate">{contentTitle}</div>
+              <div className="text-xs text-[color:var(--app-primary)] truncate font-semibold">{employeeLabel}</div>
               <div className="text-xs text-[color:var(--app-muted-2)] truncate">Vai trò: {role || '-'}</div>
             </div>
           </div>

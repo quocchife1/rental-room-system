@@ -1,6 +1,8 @@
 package com.example.rental.service;
 
 import com.example.rental.dto.maintenance.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,6 +14,8 @@ public interface MaintenanceRequestService {
     List<MaintenanceResponse> getRequestsByStatus(String status);
 
     List<MaintenanceResponse> getAllRequests();
+
+    Page<MaintenanceResponse> getAllRequests(Pageable pageable);
 
     MaintenanceResponse updateRequest(Long requestId, String resolution, String status, String technician, String cost);
 

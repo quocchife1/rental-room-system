@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import roomApi from '../api/roomApi';
 import publicPartnerApi from '../api/publicPartnerApi';
+import branchApi from '../api/branchApi';
 import resolveImageUrl from '../utils/resolveImageUrl';
 import RoomCard from '../components/RoomCard';
 import MainLayout from '../components/MainLayout';
@@ -13,18 +14,34 @@ export default function HomePage() {
   const [displayRooms, setDisplayRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [partnerPosts, setPartnerPosts] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   const isSummer = currentTheme === 'summer';
 
   // Chỉ còn lại bộ lọc chi nhánh
   const [filterBranch, setFilterBranch] = useState('ALL');
+  const [roomPage, setRoomPage] = useState(0);
+  const [roomSize] = useState(8);
+  const [postPage, setPostPage] = useState(0);
+  const [postSize] = useState(8);
+  const [postTotalPages, setPostTotalPages] = useState(0);
+  const [postTotalElements, setPostTotalElements] = useState(0);
 
-  const branches = [
-    { code: 'ALL', name: 'Toàn bộ hệ thống' },
-    { code: 'CN01', name: 'UML Quận 1 - Center' },
-    { code: 'CN02', name: 'UML Quận 7 - Riverside' },
-    { code: 'CN03', name: 'UML Thủ Đức - Campus' }
-  ];
+  const branchOptions = useMemo(() => {
+    return [
+      { code: 'ALL', name: 'Toàn bộ hệ thống' },
+      ...branches.map((branch) => ({
+        code: branch.branchCode,
+        name: `${branch.branchCode} - ${branch.branchName}`,
+      })),
+    ];
+  }, [branches]);
+
+  const roomTotalPages = Math.max(1, Math.ceil((displayRooms.length || 0) / roomSize));
+  const visibleRooms = displayRooms.slice(roomPage * roomSize, (roomPage + 1) * roomSize);
+
+  const currentPostStart = postTotalElements === 0 ? 0 : postPage * postSize + 1;
+  const currentPostEnd = Math.min((postPage + 1) * postSize, postTotalElements);
 
   const fetchRooms = async () => {
     setLoading(true);
@@ -56,20 +73,45 @@ export default function HomePage() {
     }
   };
 
+  const fetchBranches = async () => {
+    try {
+      const res = await branchApi.getPublicAll();
+      const data = res?.data?.result || res?.data || res || [];
+      setBranches(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Lỗi tải danh sách chi nhánh', error);
+      setBranches([]);
+    }
+  };
+
   useEffect(() => {
-    fetchRooms();
-    fetchPartnerPosts();
+    fetchBranches();
   }, []);
+
+  useEffect(() => {
+    setRoomPage(0);
+    fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterBranch]);
+
+  useEffect(() => {
+    fetchPartnerPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postPage, postSize]);
 
   const fetchPartnerPosts = async () => {
     try {
-      const res = await publicPartnerApi.list({ page: 0, size: 8, sort: 'createdAt,desc' });
+      const res = await publicPartnerApi.list({ page: postPage, size: postSize, sort: 'createdAt,desc' });
       const data = res?.data?.result || res?.data || res;
       const content = data?.content || [];
       setPartnerPosts(content);
+      setPostTotalPages(data?.totalPages || 0);
+      setPostTotalElements(data?.totalElements || content.length);
     } catch (e) {
       console.error('Lỗi tải tin đối tác', e);
       setPartnerPosts([]);
+      setPostTotalPages(0);
+      setPostTotalElements(0);
     }
   };
 
@@ -131,7 +173,7 @@ export default function HomePage() {
                   value={filterBranch}
                   onChange={handleBranchChange}
                 >
-                  {branches.map((b) => (
+                  {branchOptions.map((b) => (
                     <option key={b.code} value={b.code}>{b.name}</option>
                   ))}
                 </select>
@@ -185,9 +227,9 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          ) : displayRooms.length > 0 ? (
+          ) : visibleRooms.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {displayRooms.map((room) => (
+              {visibleRooms.map((room) => (
                 <RoomCard key={room.id} room={room} />
               ))}
             </div>
@@ -198,15 +240,42 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-[color:var(--app-text)] mb-2">Chưa tìm thấy phòng trống</h3>
               <p className="text-[color:var(--app-muted)] max-w-md text-center">
-                Hiện tại khu vực <span className="font-semibold text-[color:var(--app-text)]">{branches.find(b => b.code === filterBranch)?.name}</span> đang hết phòng trống. 
+                Hiện tại khu vực <span className="font-semibold text-[color:var(--app-text)]">{branchOptions.find(b => b.code === filterBranch)?.name}</span> đang hết phòng trống. 
                 Bạn hãy thử chọn khu vực khác xem sao nhé!
               </p>
               <button 
-                  onClick={() => { setFilterBranch('ALL'); fetchRooms(); }}
+                  onClick={() => setFilterBranch('ALL')}
                   className="mt-8 text-[color:var(--app-primary)] font-semibold hover:text-[color:var(--app-primary-hover)] transition-colors flex items-center gap-2"
               >
                   <span>↺</span> Xem tất cả khu vực
               </button>
+            </div>
+          )}
+
+          {displayRooms.length > roomSize && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 px-2">
+              <div className="text-sm text-[color:var(--app-muted)]">
+                Hiển thị {Math.min(roomPage * roomSize + 1, displayRooms.length)}-{Math.min((roomPage + 1) * roomSize, displayRooms.length)} trong {displayRooms.length} phòng khả dụng
+              </div>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <button
+                  className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                  disabled={roomPage <= 0}
+                  onClick={() => setRoomPage((p) => Math.max(p - 1, 0))}
+                >
+                  ← Trước
+                </button>
+                <span className="text-sm text-[color:var(--app-muted)] font-medium">
+                  Trang {roomPage + 1}/{roomTotalPages}
+                </span>
+                <button
+                  className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                  disabled={roomPage >= roomTotalPages - 1}
+                  onClick={() => setRoomPage((p) => Math.min(p + 1, roomTotalPages - 1))}
+                >
+                  Sau →
+                </button>
+              </div>
             </div>
           )}
         </section>
@@ -216,7 +285,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-[color:var(--app-border)]">
             <h2 className="text-2xl font-bold text-[color:var(--app-text)]">Tin từ đối tác</h2>
             <span className="text-sm font-medium text-[color:var(--app-muted)] bg-[color:var(--app-bg)] px-4 py-2 rounded-full border border-[color:var(--app-border)]">
-              {partnerPosts.length} tin nổi bật
+              {postTotalElements || partnerPosts.length} tin nổi bật
             </span>
           </div>
 
@@ -244,6 +313,33 @@ export default function HomePage() {
             <div className="text-center py-12 bg-[color:var(--app-surface-solid)] rounded-3xl border border-[color:var(--app-border)] shadow-sm">
               <div className="w-16 h-16 bg-[color:var(--app-primary-soft)] rounded-full flex items-center justify-center mx-auto mb-3 text-3xl grayscale opacity-50">📰</div>
               <p className="text-[color:var(--app-muted)]">Chưa có tin đối tác nào được duyệt</p>
+            </div>
+          )}
+
+          {postTotalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 px-2">
+              <div className="text-sm text-[color:var(--app-muted)]">
+                Hiển thị {currentPostStart}-{currentPostEnd} trong {postTotalElements} tin
+              </div>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <button
+                  className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                  disabled={postPage <= 0}
+                  onClick={() => setPostPage((p) => Math.max(p - 1, 0))}
+                >
+                  ← Trước
+                </button>
+                <span className="text-sm text-[color:var(--app-muted)] font-medium">
+                  Trang {postPage + 1}/{postTotalPages}
+                </span>
+                <button
+                  className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                  disabled={postPage >= postTotalPages - 1}
+                  onClick={() => setPostPage((p) => Math.min(p + 1, postTotalPages - 1))}
+                >
+                  Sau →
+                </button>
+              </div>
             </div>
           )}
         </div>

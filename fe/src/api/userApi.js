@@ -1,6 +1,10 @@
 import axiosClient from './axiosClient';
 
 const userApi = {
+  getCurrentEmployeeProfile: () => {
+    return axiosClient.get('/api/employees/me');
+  },
+
   // --- Tenant ---
   getTenantProfile: (id) => {
     return axiosClient.get(`/api/management/tenants/${id}`);

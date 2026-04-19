@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const { user, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isEmployeeRole = ['ADMIN', 'DIRECTOR', 'MANAGER', 'ACCOUNTANT', 'RECEPTIONIST', 'MAINTENANCE', 'SECURITY'].includes(String(user?.role || '').toUpperCase());
   
   // 1. KHỞI TẠO STATE TỪ REDUX STORE (Đảm bảo có dữ liệu ngay lập tức)
   const [profile, setProfile] = useState({
@@ -28,6 +29,12 @@ export default function ProfilePage() {
       navigate('/login');
     }
   }, [token, user, navigate]);
+
+  useEffect(() => {
+    if (isEmployeeRole) {
+      navigate('/staff/profile', { replace: true });
+    }
+  }, [isEmployeeRole, navigate]);
 
   // 2. Fetch dữ liệu mới nhất (chỉ chạy ngầm để cập nhật, không block UI)
   useEffect(() => {
@@ -119,6 +126,7 @@ export default function ProfilePage() {
   };
 
   if (!user) return null;
+  if (isEmployeeRole) return null;
 
   return (
     <div className="bg-gray-50 min-h-screen py-12 px-4">

@@ -7,6 +7,11 @@ const invoiceApi = {
   getMyInvoices: () => {
     return axiosClient.get('/api/invoices/my-invoices');
   },
+  getMyInvoicesPaged: ({ page = 0, size = 10, sort = 'id,desc' } = {}) => {
+    return axiosClient.get('/api/invoices/my-invoices/paged', {
+      params: { page, size, sort },
+    });
+  },
   payInvoice: (id, isDirect = false) => {
     return axiosClient.post(`/api/invoices/${id}/pay`, null, {
       params: { direct: isDirect }

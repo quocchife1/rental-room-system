@@ -5,15 +5,20 @@ export default function MyInvoices() {
   const [invoices, setInvoices] = useState([]);
   const [processingId, setProcessingId] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const res = await invoiceApi.getMyInvoices();
-        const arr = Array.isArray(res) ? res : [];
-        // Sắp xếp ID giảm dần (mới nhất lên đầu)
-        arr.sort((a, b) => (b?.id || 0) - (a?.id || 0));
-        setInvoices(arr);
+        const res = await invoiceApi.getMyInvoicesPaged({ page, size, sort: 'id,desc' });
+        const data = res?.content || res?.data?.result?.content || res?.data?.content || res?.result?.content || [];
+        setInvoices(Array.isArray(data) ? data : []);
+        const meta = res?.totalPages != null ? res : res?.data?.result || res?.data || res;
+        setTotalPages(meta?.totalPages || 0);
+        setTotalElements(meta?.totalElements || (Array.isArray(data) ? data.length : 0));
       } catch (error) {
         console.error(error);
       }
@@ -44,7 +49,7 @@ export default function MyInvoices() {
     } catch (e) {
       // ignore
     }
-  }, []);
+  }, [page, size]);
 
   const handlePay = async (id, direct) => {
     setProcessingId(id);
@@ -124,7 +129,7 @@ export default function MyInvoices() {
           </div>
           <div className="bg-[color:var(--app-surface-solid)] px-4 py-2 rounded-lg shadow-sm border border-[color:var(--app-border)]">
             <span className="text-sm text-[color:var(--app-muted)] mr-2">Tổng hóa đơn:</span>
-            <span className="font-bold text-lg text-[color:var(--app-text)]">{invoices.length}</span>
+            <span className="font-bold text-lg text-[color:var(--app-text)]">{totalElements || invoices.length}</span>
           </div>
         </div>
 
@@ -134,6 +139,42 @@ export default function MyInvoices() {
             {/* Detail Header */}
             <div className="bg-[color:var(--app-primary)] text-white px-8 py-5 flex items-center justify-between">
               <div>
+
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[color:var(--app-surface-solid)] px-4 py-3 rounded-xl border border-[color:var(--app-border)] shadow-sm">
+                  <div className="text-sm text-[color:var(--app-muted)]">
+                    Hiển thị {Math.min(page * size + 1, totalElements || invoices.length)}-{Math.min((page + 1) * size, totalElements || invoices.length)} trong {totalElements || invoices.length} hóa đơn
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <button
+                      onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                      disabled={page <= 0}
+                      className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                    >
+                      ← Trước
+                    </button>
+                    <span className="text-sm font-medium text-[color:var(--app-muted)]">
+                      Trang {page + 1}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+                      disabled={page >= totalPages - 1}
+                      className="px-4 py-2 rounded-lg border border-[color:var(--app-border-strong)] text-sm font-medium hover:bg-[color:var(--app-primary-soft)] disabled:opacity-50"
+                    >
+                      Sau →
+                    </button>
+                    <select
+                      value={size}
+                      onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
+                      className="ml-1 border border-[color:var(--app-border-strong)] rounded-lg px-2 py-2 text-sm bg-[color:var(--app-surface-solid)]"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                </div>
+              )}
                 <div className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1">Chi tiết hóa đơn</div>
                 <div className="text-xl font-bold">Mã số #{selected.id}</div>
               </div>

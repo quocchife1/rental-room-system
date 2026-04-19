@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/auth/authSlice';
 import authApi from '../api/authApi';
+import userApi from '../api/userApi';
 import HeaderThemeMenu from './theme/shared/HeaderThemeMenu';
 import SummerHeaderDecoration from './theme/summer/SummerHeaderDecoration';
 import HangingHeaderDecorations from './theme/shared/HangingHeaderDecorations';
@@ -14,6 +15,7 @@ export default function Header() {
   const { user } = useSelector((state) => state.auth);
   const { currentTheme, isTransitioning } = useSelector((state) => state.theme);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [employeeProfile, setEmployeeProfile] = useState(null);
 
   const isChristmas = currentTheme === 'christmas';
   const isSummer = currentTheme === 'summer';
@@ -46,7 +48,34 @@ export default function Header() {
   };
 
   const displayUsername = user?.username || 'User';
+  const displayName = user?.fullName || displayUsername;
+  const employeeBranchCode = employeeProfile?.branch?.branchCode || user?.branchCode || '';
+  const displayStaffLabel = employeeBranchCode ? `${displayName} • CN ${employeeBranchCode}` : displayName;
   const displayChar = displayUsername.charAt(0).toUpperCase();
+
+  React.useEffect(() => {
+    let alive = true;
+
+    const loadEmployeeProfile = async () => {
+      try {
+        const res = await userApi.getCurrentEmployeeProfile();
+        const data = res?.data?.result || res?.data || res || null;
+        if (alive) setEmployeeProfile(data || null);
+      } catch {
+        if (alive) setEmployeeProfile(null);
+      }
+    };
+
+    if (isEmployeeRole && user?.id) {
+      loadEmployeeProfile();
+    } else {
+      setEmployeeProfile(null);
+    }
+
+    return () => {
+      alive = false;
+    };
+  }, [isEmployeeRole, user?.id]);
 
   return (
     <header className="bg-[color:var(--app-surface)] backdrop-blur-md sticky top-0 z-50 border-b border-[color:var(--app-border)] relative transition-all duration-300">
@@ -164,7 +193,7 @@ export default function Header() {
                 </div>
                 <div className="hidden md:flex flex-col items-start text-left">
                   <span className="font-bold text-[color:var(--app-text)] text-sm leading-tight max-w-[150px] truncate">
-                    {displayUsername}
+                    {isEmployeeRole ? displayStaffLabel : displayUsername}
                   </span>
                 </div>
                 <svg className={`w-4 h-4 text-[color:var(--app-muted-2)] transition-transform ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -177,12 +206,15 @@ export default function Header() {
                     <p className="text-xs text-[color:var(--app-muted-2)] uppercase font-bold tracking-wider">Tài khoản</p>
                     <p className="text-sm font-bold text-[color:var(--app-primary)] truncate mt-1">{displayUsername}</p>
                     <p className="text-xs text-[color:var(--app-muted)] mt-0.5">{user.role}</p>
+                    {isEmployeeRole && employeeBranchCode && (
+                      <p className="text-xs text-[color:var(--app-primary)] mt-1 font-semibold">CN {employeeBranchCode}</p>
+                    )}
                   </div>
 
                   <div className="py-1 overflow-y-auto flex-1">
                     {/* Mục chung */}
                     <Link
-                      to="/profile"
+                      to={isEmployeeRole ? '/staff/profile' : '/profile'}
                       className="flex items-center px-4 py-2 text-sm text-[color:var(--app-text)] hover:bg-[color:var(--app-primary-soft)] hover:text-[color:var(--app-primary)] transition-colors gap-2"
                       onClick={() => setShowDropdown(false)}
                     >

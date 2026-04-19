@@ -255,6 +255,8 @@ export default function MaintenanceListPage() {
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
   
   // Modals state
   const [detailItem, setDetailItem] = useState(null);
@@ -321,6 +323,13 @@ export default function MaintenanceListPage() {
       return matchesTab && matchesSearch;
     });
   }, [items, currentTab, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / size));
+  const pagedItems = filteredItems.slice(page * size, (page + 1) * size);
+
+  useEffect(() => {
+    setPage(0);
+  }, [currentTab, searchTerm, size]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-sans text-gray-800">
@@ -412,14 +421,14 @@ export default function MaintenanceListPage() {
                       </div>
                    </td>
                  </tr>
-              ) : filteredItems.length === 0 ? (
+              ) : pagedItems.length === 0 ? (
                 <tr>
                    <td colSpan="6" className="px-6 py-12 text-center text-gray-400 italic">
                       Không tìm thấy yêu cầu nào phù hợp.
                    </td>
                  </tr>
               ) : (
-                filteredItems.map((it) => (
+                pagedItems.map((it) => (
                   <tr key={it.id} className="hover:bg-gray-50/80 transition-colors group">
                     <td className="px-6 py-4 align-top">
                       <div className="flex flex-col">
@@ -506,6 +515,40 @@ export default function MaintenanceListPage() {
           </table>
         </div>
       </div>
+
+      {!loading && filteredItems.length > 0 && totalPages > 1 && (
+        <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-4">
+          <div className="text-sm text-gray-500">
+            Hiển thị {Math.min(page * size + 1, filteredItems.length)}-{Math.min((page + 1) * size, filteredItems.length)} trong {filteredItems.length} kết quả
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <button
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page <= 0}
+            >
+              Trước
+            </button>
+            <span className="text-sm text-gray-600 font-medium">Trang {page + 1}/{totalPages}</span>
+            <button
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+              disabled={page >= totalPages - 1}
+            >
+              Sau
+            </button>
+            <select
+              value={size}
+              onChange={(e) => setSize(Number(e.target.value))}
+              className="ml-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+            >
+              {[5, 10, 20, 50].map((opt) => (
+                <option key={opt} value={opt}>{opt}/trang</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Render Modals */}
       <DetailModal isOpen={!!detailItem} item={detailItem} onClose={() => setDetailItem(null)} />

@@ -16,6 +16,17 @@ export default function TenantDashboard() {
   });
   const [recentInvoices, setRecentInvoices] = useState([]);
 
+  const normalizeList = (res) => {
+    if (Array.isArray(res)) return res;
+    if (res?.content && Array.isArray(res.content)) return res.content;
+    if (Array.isArray(res?.data?.result?.content)) return res.data.result.content;
+    if (Array.isArray(res?.data?.content)) return res.data.content;
+    if (Array.isArray(res?.data?.result)) return res.data.result;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.result)) return res.result;
+    return [];
+  };
+
   const formatMoneyVnd = (value) => {
     const num = typeof value === 'number' ? value : Number(value);
     if (!Number.isFinite(num)) return '0 đ';
@@ -53,22 +64,16 @@ export default function TenantDashboard() {
     // 1. Fetch Hóa đơn (Invoices)
     const fetchInvoices = async () => {
       try {
-        const res = await invoiceApi.getMyInvoices();
-        // axiosClient interceptor may return the inner data directly or a page/wrapper
-        let data = [];
-        if (Array.isArray(res)) {
-          data = res;
-        } else if (res && res.content) {
-          data = res.content;
-        } else if (res && res.data) {
-          data = res.data.result || res.data || [];
-        } else {
-          data = res || [];
-        }
+        const [allInvoicesRes, recentInvoicesRes] = await Promise.all([
+          invoiceApi.getMyInvoices(),
+          invoiceApi.getMyInvoicesPaged({ page: 0, size: 3, sort: 'id,desc' }),
+        ]);
+
+        const data = normalizeList(allInvoicesRes);
+        const recentData = normalizeList(recentInvoicesRes);
 
         setInvoices(data);
-        const sorted = [...(data || [])].sort(compareInvoicesDesc);
-        setRecentInvoices(sorted.slice(0, 3));
+        setRecentInvoices(recentData.length > 0 ? recentData : [...(data || [])].sort(compareInvoicesDesc).slice(0, 3));
         setStats(prev => ({ ...prev, unpaidInvoices: (data || []).filter(i => i.status === 'UNPAID').length }));
       } catch (err) {
         console.warn("Lỗi tải hóa đơn:", err.message || err);

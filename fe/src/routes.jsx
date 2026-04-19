@@ -41,6 +41,7 @@ import ContractsManagement from './pages/staff/ContractsManagement';
 import Inspection from './pages/staff/Inspection';
 import PostModeration from './pages/staff/PostModeration';
 import ManagerCleaningBookingsPage from './pages/staff/ManagerCleaningBookingsPage';
+import EmployeeProfilePage from './pages/staff/EmployeeProfilePage';
 
 // --- Finance & Technical ---
 import InvoiceManagementPage from './pages/staff/finance/InvoiceManagementPage';
@@ -256,6 +257,14 @@ const appRoutes = [
         element: (
           <ProtectedRoute allowedRoles={['MANAGER']}>
             <Inspection />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN','DIRECTOR','MANAGER','RECEPTIONIST','ACCOUNTANT','MAINTENANCE','SECURITY']}>
+            <EmployeeProfilePage />
           </ProtectedRoute>
         )
       },

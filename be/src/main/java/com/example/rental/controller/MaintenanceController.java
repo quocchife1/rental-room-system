@@ -3,6 +3,8 @@ package com.example.rental.controller;
 import com.example.rental.dto.maintenance.*;
 import com.example.rental.service.MaintenanceRequestService;
 import com.example.rental.repository.TenantRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Optional;
@@ -11,8 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/maintenance")
@@ -75,6 +75,13 @@ public class MaintenanceController {
     public ResponseEntity<com.example.rental.dto.ApiResponseDto<java.util.List<MaintenanceResponse>>> getBoard() {
         var list = maintenanceRequestService.getAllRequests();
         return ResponseEntity.ok(com.example.rental.dto.ApiResponseDto.success(200, "Maintenance board fetched", list));
+    }
+
+    @GetMapping("/board/paged")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','MAINTENANCE')")
+    public ResponseEntity<com.example.rental.dto.ApiResponseDto<Page<MaintenanceResponse>>> getBoardPaged(Pageable pageable) {
+        var page = maintenanceRequestService.getAllRequests(pageable);
+        return ResponseEntity.ok(com.example.rental.dto.ApiResponseDto.success(200, "Maintenance board page fetched", page));
     }
 
     @PatchMapping("/{id}/status")
