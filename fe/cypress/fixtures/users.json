@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "123456",
+    "role": "ADMIN",
+    "redirectPath": "/admin/dashboard"
+  },
+  "accountant": {
+    "username": "acc",
+    "password": "123456",
+    "role": "ACCOUNTANT",
+    "redirectPath": "/staff/finance/invoices"
+  },
+  "maintenance": {
+    "username": "mt",
+    "password": "123456",
+    "role": "MAINTENANCE",
+    "redirectPath": "/staff/rooms"
+  },
+  "manager1": {
+    "username": "mgr1",
+    "password": "123456",
+    "role": "MANAGER",
+    "redirectPath": "/staff/rooms"
+  },
+  "manager2": {
+    "username": "mgr2",
+    "password": "123456",
+    "role": "MANAGER",
+    "redirectPath": "/staff/rooms"
+  },
+  "manager3": {
+    "username": "mgr3",
+    "password": "123456",
+    "role": "MANAGER",
+    "redirectPath": "/staff/rooms"
+  },
+  "receptionist1": {
+    "username": "rec1",
+    "password": "123456",
+    "role": "RECEPTIONIST",
+    "redirectPath": "/staff/rooms"
+  },
+  "receptionist2": {
+    "username": "rec2",
+    "password": "123456",
+    "role": "RECEPTIONIST",
+    "redirectPath": "/staff/rooms"
+  },
+  "receptionist3": {
+    "username": "rec3",
+    "password": "123456",
+    "role": "RECEPTIONIST",
+    "redirectPath": "/staff/rooms"
+  },
+  "director": {
+    "username": "dir",
+    "password": "123456",
+    "role": "DIRECTOR",
+    "redirectPath": "/admin/dashboard"
+  }
+}

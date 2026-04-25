@@ -1,0 +1,20 @@
+{
+  "availableRoom": {
+    "id": 1,
+    "roomNumber": "P101",
+    "roomCode": "CN01-P101",
+    "branchCode": "CN01",
+    "price": 2500000,
+    "area": 25,
+    "status": "AVAILABLE"
+  },
+  "occupiedRoom": {
+    "id": 2,
+    "roomNumber": "P102",
+    "roomCode": "CN01-P102",
+    "branchCode": "CN01",
+    "price": 2500000,
+    "area": 25,
+    "status": "OCCUPIED"
+  }
+}

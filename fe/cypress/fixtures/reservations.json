@@ -1,0 +1,30 @@
+{
+  "pendingReservation": {
+    "id": 10,
+    "reservationCode": "RES-TEST-001",
+    "roomId": 1,
+    "roomNumber": "P101",
+    "roomCode": "CN01-P101",
+    "tenantName": "Nguyễn Văn A",
+    "tenantPhoneNumber": "0901234567",
+    "tenantEmail": "tenant@test.com",
+    "visitDate": "2026-05-01",
+    "visitSlot": "MORNING",
+    "status": "PENDING_CONFIRMATION",
+    "reservationDate": "2026-04-20"
+  },
+  "reservedReservation": {
+    "id": 11,
+    "reservationCode": "RES-TEST-002",
+    "roomId": 1,
+    "roomNumber": "P101",
+    "roomCode": "CN01-P101",
+    "tenantName": "Trần Thị B",
+    "tenantPhoneNumber": "0912345678",
+    "tenantEmail": "tenant2@test.com",
+    "visitDate": "2026-05-02",
+    "visitSlot": "AFTERNOON",
+    "status": "RESERVED",
+    "reservationDate": "2026-04-20"
+  }
+}
