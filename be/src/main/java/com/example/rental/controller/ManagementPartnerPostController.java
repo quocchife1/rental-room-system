@@ -55,6 +55,9 @@ public class ManagementPartnerPostController {
                 Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<PartnerPostListItem> result = partnerPostRepository
                 .pageListItems(statuses, keyword, pageable);
+        if ("REJECTED".equalsIgnoreCase(status == null ? "" : status.trim())) {
+            result = partnerPostRepository.pageRejectedWorkflowItems(keyword, pageable);
+        }
         Page<PartnerPostResponse> resp = result.map(item -> PartnerPostResponse.builder()
                 .id(item.getId())
                 .title(item.getTitle())
@@ -72,6 +75,11 @@ public class ManagementPartnerPostController {
                 .partnerPhone(item.getPartnerPhone())
                 .imageUrls(java.util.List.of())
                 .rejectReason(item.getRejectReason())
+                .rejectCount(item.getRejectCount())
+                .updateCount(item.getUpdateCount())
+                .updatedAfterReject(item.getUpdatedAfterReject())
+                .lastRejectedAt(item.getLastRejectedAt())
+                .lastResubmittedAt(item.getLastResubmittedAt())
                 .build());
         return ResponseEntity.ok(ApiResponseDto.success(200, "Danh sách tin theo bộ lọc", resp));
     }
@@ -113,6 +121,8 @@ public class ManagementPartnerPostController {
         PartnerPost post = partnerPostRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tin"));
         post.setStatus(com.example.rental.entity.PostApprovalStatus.APPROVED);
+        post.setUpdatedAfterReject(false);
+        post.setRejectReason(null);
         post.setApprovedAt(java.time.LocalDateTime.now());
         // set approvedBy from current authenticated employee if available
         try {
@@ -135,6 +145,9 @@ public class ManagementPartnerPostController {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tin"));
         post.setStatus(com.example.rental.entity.PostApprovalStatus.REJECTED);
         post.setRejectReason(reason);
+        post.setUpdatedAfterReject(false);
+        post.setRejectCount((post.getRejectCount() == null ? 0 : post.getRejectCount()) + 1);
+        post.setLastRejectedAt(java.time.LocalDateTime.now());
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = auth != null ? auth.getName() : null;
@@ -168,26 +181,14 @@ public class ManagementPartnerPostController {
                 .partnerName(post.getPartner().getCompanyName())
                 .partnerPhone(post.getPartner().getPhoneNumber())
                 .rejectReason(post.getRejectReason())
+                .rejectCount(post.getRejectCount())
+                .updateCount(post.getUpdateCount())
+                .updatedAfterReject(post.isUpdatedAfterReject())
+                .lastRejectedAt(post.getLastRejectedAt())
+                .lastResubmittedAt(post.getLastResubmittedAt())
                 .views(post.getViews())
                 .imageUrls(imageUrls)
                 .build();
-    }
-
-    // Additional fields for response
-    private void enrichResponse(PartnerPostResponse resp, PartnerPost post) {
-        resp.setCreatedAt(post.getCreatedAt());
-        resp.setRejectReason(post.getRejectReason());
-        if (post.getApprovedAt() != null) {
-            resp.setApprovedAt(post.getApprovedAt());
-        }
-        if (post.getApprovedBy() != null) {
-            resp.setApprovedByName(post.getApprovedBy().getFullName());
-        }
-        if (post.getPartner() != null) {
-            resp.setPartnerName(post.getPartner().getCompanyName());
-            resp.setPartnerPhone(post.getPartner().getPhoneNumber());
-            resp.setPartnerId(post.getPartner().getId());
-        }
     }
 
     // ===== Bulk operations =====
@@ -214,6 +215,8 @@ public class ManagementPartnerPostController {
             LocalDateTime now = java.time.LocalDateTime.now();
             for (PartnerPost p : posts) {
                 p.setStatus(com.example.rental.entity.PostApprovalStatus.APPROVED);
+                p.setUpdatedAfterReject(false);
+                p.setRejectReason(null);
                 p.setApprovedAt(now);
                 updated++;
             }
@@ -234,6 +237,9 @@ public class ManagementPartnerPostController {
             for (PartnerPost p : posts) {
                 p.setStatus(com.example.rental.entity.PostApprovalStatus.REJECTED);
                 p.setRejectReason(reason);
+                p.setUpdatedAfterReject(false);
+                p.setRejectCount((p.getRejectCount() == null ? 0 : p.getRejectCount()) + 1);
+                p.setLastRejectedAt(LocalDateTime.now());
                 updated++;
             }
             partnerPostRepository.saveAll(posts);
@@ -246,8 +252,6 @@ public class ManagementPartnerPostController {
     @GetMapping("/stats")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','RECEPTIONIST')")
     public ResponseEntity<ApiResponseDto<Map<String, Object>>> stats() {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         long pending = partnerPostRepository
                 .countByStatusAndIsDeletedFalse(com.example.rental.entity.PostApprovalStatus.PENDING_APPROVAL);

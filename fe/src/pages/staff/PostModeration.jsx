@@ -69,6 +69,10 @@ export default function PostModeration() {
     }
   };
 
+  const isResubmittedAfterReject = (post) => {
+    return post?.status === 'PENDING_APPROVAL' && ((post?.rejectCount || 0) > 0 || post?.updatedAfterReject);
+  };
+
   const getTypeMeta = (type) => {
     switch (type) {
       case 'VIP1':
@@ -165,7 +169,7 @@ export default function PostModeration() {
           <button className="px-4 py-2 rounded bg-gray-800 text-white" onClick={fetchPosts}>Tìm</button>
           {(status === 'PENDING_APPROVAL' || status === 'REJECTED') && selectedIds.length > 0 && (
             <>
-              {status === 'PENDING_APPROVAL' && (
+              {(status === 'PENDING_APPROVAL' || status === 'REJECTED') && (
                 <button className="px-4 py-2 rounded bg-emerald-600 text-white" onClick={async () => {
                   try { await staffApi.approvePostsBatch(selectedIds); setSelectedIds([]); await fetchPosts(); try { const s = await staffApi.getModerationStats?.(); setStats(parseStats(s)); } catch { } } catch (e) { alert('Không thể duyệt hàng loạt'); }
                 }}>Duyệt hàng loạt ({selectedIds.length})</button>
@@ -206,6 +210,11 @@ export default function PostModeration() {
                     <div className="flex flex-col items-end gap-1">
                       <span className={`text-xs px-2 py-1 rounded-full ${statusMeta.cls}`}>{statusMeta.label}</span>
                       <span className={`text-[11px] px-2 py-1 rounded-full ${typeMeta.cls}`}>{typeMeta.label}</span>
+                      {isResubmittedAfterReject(post) && (
+                        <span className="text-[11px] px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                          Đã cập nhật sau từ chối
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -242,16 +251,20 @@ export default function PostModeration() {
                     </div>
                   )}
 
+                  {(post.rejectCount || 0) > 0 && (
+                    <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                      Lần từ chối: <b>{post.rejectCount || 0}</b> | Lần cập nhật: <b>{post.updateCount || 0}</b>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between mt-auto pt-1">
                     <div className="text-[color:var(--app-primary)] font-bold text-sm">#{post.id}</div>
                     <div className="flex gap-2">
                       <button className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50" onClick={() => openDetail(post.id)}>Xem</button>
-                      {status !== 'APPROVED' && (
+                      {post.status !== 'APPROVED' && (
                         <button className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700" onClick={() => approve(post.id)}>Duyệt</button>
                       )}
-                      {status !== 'REJECTED' && (
-                        <button className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700" onClick={() => reject(post.id)}>Từ chối</button>
-                      )}
+                      <button className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700" onClick={() => reject(post.id)}>Từ chối</button>
                     </div>
                   </div>
                 </div>
@@ -348,6 +361,19 @@ export default function PostModeration() {
                     <div className="bg-red-50 border border-red-100 text-red-800 rounded-xl p-3 text-sm">
                       <div className="font-semibold mb-1">Lý do bị từ chối</div>
                       <div className="whitespace-pre-line">{selected.rejectReason}</div>
+                    </div>
+                  )}
+
+                  {(selected.rejectCount || 0) > 0 && (
+                    <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-xl p-3 text-sm">
+                      <div>Lần từ chối: <b>{selected.rejectCount || 0}</b></div>
+                      <div>Lần cập nhật: <b>{selected.updateCount || 0}</b></div>
+                    </div>
+                  )}
+
+                  {isResubmittedAfterReject(selected) && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 text-sm">
+                      Tin đã được đối tác cập nhật sau lần từ chối trước. Vui lòng quyết định duyệt hoặc từ chối tiếp.
                     </div>
                   )}
                   <label className="block text-sm font-semibold text-gray-800">Lý do từ chối (nếu có)</label>

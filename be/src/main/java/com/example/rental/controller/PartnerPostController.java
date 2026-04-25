@@ -363,85 +363,23 @@ public class PartnerPostController {
                                                                 null));
                         }
 
-                        // Only allow edit if PENDING_PAYMENT, PENDING_APPROVAL or REJECTED
+                        // Only allow edit when not approved
                         if (post.getStatus() == PostApprovalStatus.APPROVED) {
                                 return ResponseEntity.badRequest()
                                                 .body(ApiResponseDto.error(400, "Không thể sửa tin đã được duyệt",
                                                                 null));
                         }
 
-                        if (post.getStatus() == PostApprovalStatus.REJECTED) {
-                                return ResponseEntity.badRequest()
-                                                .body(ApiResponseDto.error(400, "Không thể sửa tin đã bị từ chối",
-                                                                null));
-                        }
-
-                        // Handle PostType change logic
-                        PostType newPostType = request.getPostType();
+                        // Keep original package on update.
+                        // Business rule: partner cannot change post type after creating the post.
                         PostType oldPostType = post.getPostType();
-                        String newPaymentUrl = null;
-                        log.info("Dang chay trong ham updatePost");
-
-                        // If PostType is being changed and post is already approved/active
-                        if (!oldPostType.equals(newPostType)
-                                        && (post.getStatus() == PostApprovalStatus.PENDING_APPROVAL)) {
-                                // Check if upgrade (to higher tier)
-                                int oldTierLevel = getPostTypeTier(oldPostType);
-                                int newTierLevel = getPostTypeTier(newPostType);
-                                log.info("Dang chay trong dieu kien if");
-
-                                if (newTierLevel < oldTierLevel) {
-                                        return ResponseEntity.badRequest()
-                                                        .body(ApiResponseDto.error(400,
-                                                                        "Chỉ được nâng cấp lên gói cao hơn, không được hạ cấp",
-                                                                        null));
-                                }
-
-                                long newAmount = getPostTypePrice(newPostType);
-
-                                String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
-                                String feReturnUrl = buildFrontendReturnUrl("/partner/my-listings");
-                                String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
-                                var momoResp = momoService.createATMPayment(newAmount, orderId,
-                                                "Thanh toan tin dang #" + id,
-                                                redirectUrl,
-                                                "");
-                                newPaymentUrl = momoResp != null ? momoResp.getPayUrl() : null;
-                                if (newPaymentUrl == null || newPaymentUrl.isBlank()) {
-                                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                                        .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
-                                }
-                                // Change status back to pending payment and overwrite payment info
-                                post.setStatus(PostApprovalStatus.PENDING_PAYMENT);
-                                post.setPaymentUrl(newPaymentUrl);
-                                post.setOrderId(orderId);
-
-                        } else if (!oldPostType.equals(newPostType)
-                                        && post.getStatus() == PostApprovalStatus.PENDING_PAYMENT) {
-                                // If not yet paid, allow free change and recreate payment link
-                                String orderId = ORDER_PARTNER_POST_PREFIX + UUID.randomUUID();
-                                long newAmount = getPostTypePrice(newPostType);
-                                String feReturnUrl = buildFrontendReturnUrl("/partner/my-listings");
-                                String redirectUrl = buildBackendMomoReturnUrl(feReturnUrl);
-                                var momoResp = momoService.createATMPayment(newAmount, orderId,
-                                                "Thanh toan tin dang #" + id,
-                                                redirectUrl,
-                                                "");
-                                newPaymentUrl = momoResp != null ? momoResp.getPayUrl() : null;
-                                if (newPaymentUrl == null || newPaymentUrl.isBlank()) {
-                                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                                        .body(ApiResponseDto.error(502, "Không thể khởi tạo thanh toán MoMo", null));
-                                }
-                                post.setPaymentUrl(newPaymentUrl);
-                                post.setOrderId(orderId);
-                        }
 
                         post.setTitle(request.getTitle());
                         post.setDescription(request.getDescription());
                         post.setPrice(request.getPrice());
                         post.setArea(request.getArea());
                         post.setAddress(request.getAddress());
-                        post.setPostType(newPostType);
+                        post.setPostType(oldPostType);
 
                         PartnerPost updated = partnerPostService.updatePost(post);
 
@@ -473,25 +411,6 @@ public class PartnerPostController {
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                         .body(ApiResponseDto.error(500, "Lỗi khi cập nhật tin đăng: " + e.getMessage(),
                                                         null));
-                }
-        }
-
-        /**
-         * Helper method to get tier level of PostType (0=NORMAL, 1=VIP1, 2=VIP2,
-         * 3=VIP3)
-         */
-        private int getPostTypeTier(PostType postType) {
-                switch (postType) {
-                        case NORMAL:
-                                return 0;
-                        case VIP1:
-                                return 1;
-                        case VIP2:
-                                return 2;
-                        case VIP3:
-                                return 3;
-                        default:
-                                return 0;
                 }
         }
 
@@ -569,6 +488,11 @@ public class PartnerPostController {
                                 .partnerName(post.getPartner().getCompanyName())
                                 .partnerPhone(post.getPartner().getPhoneNumber())
                                 .rejectReason(post.getRejectReason())
+                                .rejectCount(post.getRejectCount())
+                                .updateCount(post.getUpdateCount())
+                                .updatedAfterReject(post.isUpdatedAfterReject())
+                                .lastRejectedAt(post.getLastRejectedAt())
+                                .lastResubmittedAt(post.getLastResubmittedAt())
                                 .paymentUrl(post.getPaymentUrl())
                                 .views(post.getViews())
                                 .imageUrls(imageUrls)

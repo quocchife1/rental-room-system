@@ -76,6 +76,24 @@ public class PartnerPost {
     @Column(name = "reject_reason", length = 500)
     private String rejectReason;
 
+    @Column(name = "reject_count", nullable = false)
+    @Builder.Default
+    private Integer rejectCount = 0;
+
+    @Column(name = "update_count", nullable = false)
+    @Builder.Default
+    private Integer updateCount = 0;
+
+    @Column(name = "updated_after_reject", nullable = false)
+    @Builder.Default
+    private boolean updatedAfterReject = false;
+
+    @Column(name = "last_rejected_at")
+    private LocalDateTime lastRejectedAt;
+
+    @Column(name = "last_resubmitted_at")
+    private LocalDateTime lastResubmittedAt;
+
     @Column(name = "views", nullable = false)
     @Builder.Default
     private Integer views = 0;

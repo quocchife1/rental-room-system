@@ -190,24 +190,38 @@ export default function MyListings() {
                   <td className="px-6 py-4 text-center">
                     {getPackageBadge(item.postType)}
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    {getStatusBadge(item.status)}
-                    {item.status === 'PENDING_PAYMENT' && (
-                      <button
-                        type="button"
-                        onClick={() => handlePayNow(item.id)}
-                        disabled={payingId === item.id}
-                        className="mt-2 inline-block text-indigo-600 font-bold hover:underline disabled:opacity-50"
-                      >
-                        {payingId === item.id ? 'Đang tạo link...' : 'Thanh toán ngay →'}
-                      </button>
-                    )}
-                    {item.status === 'REJECTED' && item.rejectReason && (
-                      <div className="mt-2 text-xs text-left bg-red-50 border border-red-100 text-red-700 rounded-lg px-3 py-2 inline-block max-w-xs">
-                        <div className="font-semibold">Lý do bị từ chối</div>
-                        <div className="line-clamp-3 whitespace-pre-line">{item.rejectReason}</div>
-                      </div>
-                    )}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col items-center gap-2">
+                      {getStatusBadge(item.status)}
+
+                      {item.status === 'PENDING_PAYMENT' && (
+                        <button
+                          type="button"
+                          onClick={() => handlePayNow(item.id)}
+                          disabled={payingId === item.id}
+                          className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          {payingId === item.id ? 'Đang tạo link...' : 'Thanh toán ngay'}
+                          <span>→</span>
+                        </button>
+                      )}
+
+                      {item.status === 'REJECTED' && item.rejectReason && (
+                        <div className="w-full max-w-[230px] rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
+                          <div className="font-semibold">Lý do bị từ chối</div>
+                          <div className="mt-0.5 line-clamp-3 whitespace-pre-line">{item.rejectReason}</div>
+                        </div>
+                      )}
+
+                      {item.status === 'PENDING_APPROVAL' && item.updatedAfterReject && (
+                        <div className="w-full max-w-[230px] rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs text-amber-800">
+                          <div className="font-semibold">Đã gửi duyệt lại</div>
+                          <div className="mt-0.5">
+                            Lần cập nhật: {item.updateCount || 0} | Lần bị từ chối: {item.rejectCount || 0}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="inline-flex flex-col items-center">
@@ -216,12 +230,12 @@ export default function MyListings() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {(item.status !== 'APPROVED' && item.status !== 'REJECTED') ? (
+                      {(item.status !== 'APPROVED') ? (
                         <Link to={`/partner/edit-listing/${item.id}`} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Chỉnh sửa">
                           ✎
                         </Link>
                       ) : (
-                        <button className="p-2 text-gray-300 cursor-not-allowed rounded-lg" title="Không thể sửa tin đã hiển thị hoặc bị từ chối" disabled>
+                        <button className="p-2 text-gray-300 cursor-not-allowed rounded-lg" title="Không thể sửa tin đã hiển thị" disabled>
                           ✎
                         </button>
                       )}

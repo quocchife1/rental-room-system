@@ -40,12 +40,21 @@ public interface PartnerPostRepository extends JpaRepository<PartnerPost, Long> 
             @Param("title") String title, Pageable pageable);
 
     // Projection-based paging for moderation list
-    @Query(value = "SELECT new com.example.rental.dto.partnerpost.PartnerPostListItem(p.id, p.title, p.description, p.price, p.area, p.address, p.postType, p.status, p.createdAt, p.approvedAt, (CASE WHEN ab.fullName IS NOT NULL THEN ab.fullName ELSE NULL END), pr.id, pr.companyName, pr.phoneNumber, p.rejectReason) "
+    @Query(value = "SELECT new com.example.rental.dto.partnerpost.PartnerPostListItem(p.id, p.title, p.description, p.price, p.area, p.address, p.postType, p.status, p.createdAt, p.approvedAt, (CASE WHEN ab.fullName IS NOT NULL THEN ab.fullName ELSE NULL END), pr.id, pr.companyName, pr.phoneNumber, p.rejectReason, p.rejectCount, p.updateCount, p.updatedAfterReject, p.lastRejectedAt, p.lastResubmittedAt) "
             +
             "FROM PartnerPost p LEFT JOIN p.approvedBy ab LEFT JOIN p.partner pr " +
             "WHERE p.isDeleted = false AND p.status IN :statuses AND LOWER(p.title) LIKE LOWER(CONCAT('%', :title, '%'))", countQuery = "SELECT COUNT(p) FROM PartnerPost p WHERE p.isDeleted = false AND p.status IN :statuses AND LOWER(p.title) LIKE LOWER(CONCAT('%', :title, '%'))")
     Page<com.example.rental.dto.partnerpost.PartnerPostListItem> pageListItems(
             @Param("statuses") List<PostApprovalStatus> statuses, @Param("title") String title, Pageable pageable);
+
+    @Query(value = "SELECT new com.example.rental.dto.partnerpost.PartnerPostListItem(p.id, p.title, p.description, p.price, p.area, p.address, p.postType, p.status, p.createdAt, p.approvedAt, (CASE WHEN ab.fullName IS NOT NULL THEN ab.fullName ELSE NULL END), pr.id, pr.companyName, pr.phoneNumber, p.rejectReason, p.rejectCount, p.updateCount, p.updatedAfterReject, p.lastRejectedAt, p.lastResubmittedAt) "
+            +
+            "FROM PartnerPost p LEFT JOIN p.approvedBy ab LEFT JOIN p.partner pr " +
+            "WHERE p.isDeleted = false " +
+            "AND LOWER(p.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+            "AND (p.status = com.example.rental.entity.PostApprovalStatus.REJECTED OR (p.status = com.example.rental.entity.PostApprovalStatus.PENDING_APPROVAL AND p.rejectCount > 0))", countQuery = "SELECT COUNT(p) FROM PartnerPost p WHERE p.isDeleted = false AND LOWER(p.title) LIKE LOWER(CONCAT('%', :title, '%')) AND (p.status = com.example.rental.entity.PostApprovalStatus.REJECTED OR (p.status = com.example.rental.entity.PostApprovalStatus.PENDING_APPROVAL AND p.rejectCount > 0))")
+    Page<com.example.rental.dto.partnerpost.PartnerPostListItem> pageRejectedWorkflowItems(
+            @Param("title") String title, Pageable pageable);
 
     // Counters for stats
     @Query("SELECT COUNT(p) FROM PartnerPost p WHERE p.status = :status AND p.isDeleted = false")

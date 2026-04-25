@@ -73,8 +73,8 @@ Cypress.Commands.add('loginByApi', (fixtureKey) => {
 
         return cy.wrap({ ...user, ...authPayload }, { log: false });
       });
-  });
-});
+  }); // <-- Đã thêm: Đóng cy.fixture().then()
+}); // <-- Đã thêm: Đóng Cypress.Commands.add('loginByApi')
 
 /**
  * loginByLocalStorage: Alias của loginByApi để tương thích với code cũ.
@@ -83,19 +83,24 @@ Cypress.Commands.add('loginByLocalStorage', (fixtureKey) => {
   return cy.loginByApi(fixtureKey);
 });
 
+/**
+ * logoutByUi: Đăng xuất qua UI
+ * Usage: cy.logoutByUi()
+ */
 Cypress.Commands.add('logoutByUi', () => {
-  cy.window().then((win) => {
-    const rawUser = win.localStorage.getItem('user');
-    const user = rawUser ? JSON.parse(rawUser) : null;
+  cy.get('body').then(($body) => {
+    const hasLogoutVisible = $body.find('button:contains("Đăng xuất")').length > 0;
 
-    if (user?.username) {
-      cy.contains('span', user.username).should('be.visible').click();
+    if (hasLogoutVisible) {
+      cy.contains('button', 'Đăng xuất').click({ force: true });
       return;
     }
 
-    cy.get('header button').first().click();
+    // Open account dropdown first, then click logout
+    cy.get('header button', { timeout: 10000 }).first().click({ force: true });
+    cy.contains('button', 'Đăng xuất', { timeout: 8000 }).click({ force: true });
   });
 
-  cy.contains('button', 'Đăng xuất').click();
+  // Wait for redirect to login
   cy.location('pathname', { timeout: 10000 }).should('eq', '/login');
 });

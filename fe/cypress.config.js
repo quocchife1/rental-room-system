@@ -21,5 +21,8 @@ export default defineConfig({
     env: {
       apiUrl,
     },
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+    },
   },
 });

@@ -20,6 +20,11 @@ describe('Auth E2E', () => {
 
     cy.location('pathname', { timeout: 10000 }).should('eq', '/login');
     cy.get('.border-red-500').should('be.visible');
+    // Verify still on login page
+    cy.location('pathname', { timeout: 10000 }).should('eq', '/login');
+    
+    // Verify error message is displayed
+    cy.get('.text-red-700').should('be.visible');
   });
 
   ['admin', 'accountant', 'maintenance', 'director'].forEach((fixtureKey) => {

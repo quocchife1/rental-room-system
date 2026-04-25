@@ -14,6 +14,12 @@ describe('Route Guard E2E', () => {
 
     cy.visit('/admin/dashboard');
     cy.location('pathname', { timeout: 10000 }).should('eq', '/');
+
+    cy.loginByFixture('accountant').then((user) => {
+      cy.visit('/admin/dashboard');
+      // Accountant should be redirected to their redirectPath, not /
+      cy.location('pathname', { timeout: 10000 }).should('eq', user.redirectPath);
+    });
   });
 
   it('allows role-matched access to admin pages', () => {

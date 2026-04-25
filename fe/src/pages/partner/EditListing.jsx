@@ -14,13 +14,13 @@ export default function EditListing() {
     address: '',
     postType: 'NORMAL'
   });
-  const [originalPostType, setOriginalPostType] = useState(null);
   const [postStatus, setPostStatus] = useState(null);
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingPost, setFetchingPost] = useState(true);
+  const isLocked = postStatus === 'APPROVED';
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -57,7 +57,6 @@ export default function EditListing() {
         address: post.address,
         postType: post.postType
       });
-      setOriginalPostType(post.postType);
       setPostStatus(post.status);
 
       // Load existing images
@@ -75,9 +74,8 @@ export default function EditListing() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const canEdit = !(postStatus === 'APPROVED' || postStatus === 'REJECTED');
-    if (!canEdit) {
-      alert('Tin đã hiển thị hoặc bị từ chối, không thể sửa.');
+    if (isLocked) {
+      alert('Tin đã hiển thị, không thể sửa.');
       return;
     }
     setLoading(true);
@@ -92,26 +90,9 @@ export default function EditListing() {
         postType: formData.postType
       };
 
-      const res = await partnerApi.updatePost(id, payload, images);
-      const responseData = res?.data?.data || res?.data || res;
-      const postTypeChanged = originalPostType && originalPostType !== formData.postType;
+      await partnerApi.updatePost(id, payload, images);
 
-      if (postTypeChanged) {
-        try {
-          const payment = await partnerApi.initiatePostMomoPayment(id);
-          const payUrl = payment?.payUrl || payment?.paymentUrl;
-          if (payUrl) {
-            alert('Đổi gói tin thành công. Đang chuyển đến trang thanh toán MoMo.');
-            imagePreviews.forEach(url => URL.revokeObjectURL(url));
-            window.location.href = payUrl;
-            return;
-          }
-        } catch (e) {
-          // If backend says no payment needed / not pending, just continue
-        }
-      }
-
-      alert('Cập nhật tin thành công!');
+      alert('Cập nhật tin thành công! Trạng thái đã chuyển về Chờ duyệt.');
 
       // Clean up preview URLs
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
@@ -140,15 +121,19 @@ export default function EditListing() {
         <p className="text-gray-500 mt-2">Cập nhật thông tin tin đăng của bạn</p>
       </div>
       {/* Notice when editing is locked */}
-      {postStatus === 'APPROVED' || postStatus === 'REJECTED' ? (
+      {postStatus === 'APPROVED' ? (
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
-          Tin đang hiển thị hoặc đã bị từ chối, không thể chỉnh sửa.
+          Tin đang hiển thị, không thể chỉnh sửa.
+        </div>
+      ) : null}
+
+      {postStatus === 'REJECTED' ? (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800">
+          Tin đã bị từ chối. Bạn có thể chỉnh sửa theo góp ý và cập nhật để gửi duyệt lại.
         </div>
       ) : null}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-        {/** compute canEdit for disabling fields */}
-        {(() => { })()}
         {/* Thông tin cơ bản */}
         <div className="space-y-4">
           <h3 className="font-bold text-gray-700 border-b pb-2">1. Thông tin cơ bản</h3>
@@ -158,7 +143,7 @@ export default function EditListing() {
               placeholder="VD: Cho thuê phòng trọ giá rẻ gần ĐH Công Nghệ..."
               value={formData.title}
               onChange={e => setFormData({ ...formData, title: e.target.value })}
-              disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+              disabled={isLocked} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -167,7 +152,7 @@ export default function EditListing() {
                 placeholder="2000000"
                 value={formData.price}
                 onChange={e => setFormData({ ...formData, price: e.target.value })}
-                disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+                disabled={isLocked} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Diện tích (m²)</label>
@@ -175,7 +160,7 @@ export default function EditListing() {
                 placeholder="25"
                 value={formData.area}
                 onChange={e => setFormData({ ...formData, area: e.target.value })}
-                disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+                disabled={isLocked} />
             </div>
           </div>
           <div>
@@ -184,7 +169,7 @@ export default function EditListing() {
               placeholder="123 Đường ABC, Quận XYZ, TP HCM"
               value={formData.address}
               onChange={e => setFormData({ ...formData, address: e.target.value })}
-              disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+              disabled={isLocked} />
           </div>
         </div>
 
@@ -197,7 +182,7 @@ export default function EditListing() {
               placeholder="Mô tả đầy đủ về phòng trọ..."
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
-              disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'}></textarea>
+              disabled={isLocked}></textarea>
           </div>
         </div>
 
@@ -238,7 +223,7 @@ export default function EditListing() {
               accept="image/*"
               onChange={handleImageChange}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-              disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'}
+              disabled={isLocked}
             />
             <p className="text-xs text-gray-500 mt-1">
               {existingImages.length > 0
@@ -275,9 +260,12 @@ export default function EditListing() {
         {/* Chọn gói tin */}
         <div className="space-y-4">
           <h3 className="font-bold text-gray-700 border-b pb-2">4. Loại tin đăng</h3>
+          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-700">
+            Loại tin đăng được giữ nguyên khi cập nhật và không thể thay đổi.
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all ${formData.postType === 'NORMAL' ? 'border-gray-700 bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
-              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'NORMAL'} onChange={() => setFormData({ ...formData, postType: 'NORMAL' })} disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+            <label className={`relative border-2 rounded-2xl p-4 transition-all ${formData.postType === 'NORMAL' ? 'border-gray-700 bg-gray-50' : 'border-gray-200'}`}>
+              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'NORMAL'} readOnly disabled />
               <div className="flex items-center gap-2 mb-1">
                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData.postType === 'NORMAL' ? 'border-gray-800' : 'border-gray-300'}`}>
                   {formData.postType === 'NORMAL' && <div className="w-3 h-3 rounded-full bg-gray-900"></div>}
@@ -287,8 +275,8 @@ export default function EditListing() {
               <div className="text-xs text-gray-600 pl-7">Vị trí thấp, trôi nhanh. Giá 20.000đ/tin.</div>
             </label>
 
-            <label className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all ${formData.postType === 'VIP1' ? 'border-blue-500 bg-blue-50/60' : 'border-gray-200 hover:border-blue-200'}`}>
-              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP1'} onChange={() => setFormData({ ...formData, postType: 'VIP1' })} disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+            <label className={`relative border-2 rounded-2xl p-4 transition-all ${formData.postType === 'VIP1' ? 'border-blue-500 bg-blue-50/60' : 'border-gray-200'}`}>
+              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP1'} readOnly disabled />
               <div className="absolute top-0 right-0 bg-blue-600 text-white text-[11px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">VIP Bạc</div>
               <div className="flex items-center gap-2 mb-1">
                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData.postType === 'VIP1' ? 'border-blue-600' : 'border-gray-300'}`}>
@@ -299,8 +287,8 @@ export default function EditListing() {
               <div className="text-xs text-gray-600 pl-7">Nổi bật nhẹ, giá rẻ. Vị trí trên tin thường. Giá 50.000đ/tin.</div>
             </label>
 
-            <label className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all ${formData.postType === 'VIP2' ? 'border-amber-400 bg-amber-50/70 shadow-sm' : 'border-amber-100 hover:border-amber-200'}`}>
-              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP2'} onChange={() => setFormData({ ...formData, postType: 'VIP2' })} disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+            <label className={`relative border-2 rounded-2xl p-4 transition-all ${formData.postType === 'VIP2' ? 'border-amber-400 bg-amber-50/70 shadow-sm' : 'border-amber-100'}`}>
+              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP2'} readOnly disabled />
               <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">VIP Vàng ⭐</div>
               <div className="flex items-center gap-2 mb-1">
                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData.postType === 'VIP2' ? 'border-orange-500' : 'border-amber-300'}`}>
@@ -311,8 +299,8 @@ export default function EditListing() {
               <div className="text-xs text-gray-700 pl-7">Thu hút mạnh, viền vàng nhạt, tiêu đề cam/đỏ. Giá 100.000đ/tin.</div>
             </label>
 
-            <label className={`relative border-2 rounded-2xl p-4 cursor-pointer transition-all ${formData.postType === 'VIP3' ? 'border-purple-500 bg-purple-50/70 shadow-md' : 'border-purple-100 hover:border-purple-200'}`}>
-              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP3'} onChange={() => setFormData({ ...formData, postType: 'VIP3' })} disabled={postStatus === 'APPROVED' || postStatus === 'REJECTED'} />
+            <label className={`relative border-2 rounded-2xl p-4 transition-all ${formData.postType === 'VIP3' ? 'border-purple-500 bg-purple-50/70 shadow-md' : 'border-purple-100'}`}>
+              <input type="radio" name="pkg" className="hidden" checked={formData.postType === 'VIP3'} readOnly disabled />
               <div className="absolute top-0 right-0 bg-gradient-to-r from-fuchsia-500 via-purple-600 to-pink-500 text-white text-[11px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">VIP Kim Cương</div>
               <div className="flex items-center gap-2 mb-1">
                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${formData.postType === 'VIP3' ? 'border-fuchsia-600' : 'border-purple-300'}`}>
@@ -329,7 +317,7 @@ export default function EditListing() {
           <button type="button" onClick={() => navigate('/partner/my-listings')} className="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition">
             Hủy bỏ
           </button>
-          <button type="submit" disabled={loading || postStatus === 'APPROVED' || postStatus === 'REJECTED'} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg transition-transform active:scale-95 disabled:opacity-50">
+          <button type="submit" disabled={loading || isLocked} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg transition-transform active:scale-95 disabled:opacity-50">
             {loading ? 'Đang xử lý...' : 'Cập nhật tin'}
           </button>
         </div>

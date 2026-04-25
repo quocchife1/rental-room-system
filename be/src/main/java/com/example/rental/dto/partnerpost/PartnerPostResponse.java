@@ -31,6 +31,11 @@ public class PartnerPostResponse {
     private String partnerName;
     private String partnerPhone;
     private String rejectReason;
+    private Integer rejectCount;
+    private Integer updateCount;
+    private Boolean updatedAfterReject;
+    private LocalDateTime lastRejectedAt;
+    private LocalDateTime lastResubmittedAt;
     private String paymentUrl;
     private Integer views;
     private List<String> imageUrls; // URLs của ảnh

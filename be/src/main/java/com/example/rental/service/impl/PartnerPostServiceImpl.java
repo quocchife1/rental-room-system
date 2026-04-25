@@ -85,6 +85,14 @@ public class PartnerPostServiceImpl implements PartnerPostService {
     @Transactional
     @Audited(action = AuditAction.UPDATE_PARTNER_POST, targetType = "PARTNER_POST", description = "Cập nhật tin đối tác")
     public PartnerPost updatePost(PartnerPost post) {
+        PostApprovalStatus previousStatus = post.getStatus();
+
+        if (previousStatus == PostApprovalStatus.REJECTED) {
+            post.setUpdateCount((post.getUpdateCount() == null ? 0 : post.getUpdateCount()) + 1);
+            post.setUpdatedAfterReject(true);
+            post.setLastResubmittedAt(LocalDateTime.now());
+        }
+
         // Giữ nguyên trạng thái nếu đang chờ thanh toán;
         // chỉ reset về PENDING_APPROVAL khi không ở trạng thái PENDING_PAYMENT
         if (post.getStatus() != PostApprovalStatus.PENDING_PAYMENT) {
