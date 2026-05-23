@@ -40,7 +40,7 @@ public class ContractEndReminderScheduler {
             return;
         }
 
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("vi", "VN"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.of("vi", "VN"));
 
         for (Contract c : contracts) {
             if (c.getTenant() == null || c.getTenant().getEmail() == null || c.getTenant().getEmail().isBlank()) {

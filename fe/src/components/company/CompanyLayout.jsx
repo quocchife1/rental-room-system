@@ -393,12 +393,12 @@ export default function CompanyLayout() {
 
           <nav className="flex-1 overflow-y-auto p-3">
             <div className="space-y-1">
-              {navItems.map((it) => {
+              {navItems.map((it, index) => {
                 if (it.type === 'submenu') {
                   const isActive = it.activePrefix ? location.pathname.startsWith(it.activePrefix) : false;
                   const IconCmp = it.icon;
                   return (
-                    <div key={it.id}>
+                    <div key={`${it.id || it.to || 'submenu'}-${index}`}>
                       <NavLink
                         to={it.to}
                         onClick={() => setMobileOpen(false)}
@@ -411,11 +411,11 @@ export default function CompanyLayout() {
 
                       {!collapsed && (it.children || []).length > 0 && (
                         <div className="mt-1 ml-3 pl-3 border-l border-[color:var(--app-border)] space-y-1">
-                          {it.children.map((c) => {
+                          {it.children.map((c, childIndex) => {
                             const ChildIcon = c.icon;
                             return (
                               <NavLink
-                                key={c.to}
+                                key={`${c.to}-${childIndex}`}
                                 to={c.to}
                                 onClick={() => setMobileOpen(false)}
                                 className={({ isActive: childActive }) => cn(
@@ -437,7 +437,7 @@ export default function CompanyLayout() {
                 const IconCmp = it.icon;
                 return (
                   <NavLink
-                    key={it.to}
+                    key={`${it.to || 'link'}-${index}`}
                     to={it.to}
                     onClick={() => setMobileOpen(false)}
                     className={({ isActive }) => cn(linkBase, isActive ? linkActive : linkInactive)}

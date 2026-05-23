@@ -3,6 +3,7 @@ package com.example.rental.exception;
 import com.example.rental.dto.ApiResponseDto;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -28,11 +32,67 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        ApiResponseDto<Void> response = ApiResponseDto.error(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage() != null ? ex.getMessage() : "Không tìm thấy dữ liệu",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         ApiResponseDto<Void> response = ApiResponseDto.error(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage() != null ? ex.getMessage() : "Yêu cầu không hợp lệ",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String detail = ex.getName() + ": " + (ex.getValue() == null ? "null" : ex.getValue());
+        ApiResponseDto<Void> response = ApiResponseDto.error(
+                HttpStatus.BAD_REQUEST.value(),
+                "Tham số không hợp lệ",
+                detail,
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleMissingParam(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        ApiResponseDto<Void> response = ApiResponseDto.error(
+                HttpStatus.BAD_REQUEST.value(),
+                "Thiếu tham số bắt buộc",
+                ex.getParameterName(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        ApiResponseDto<Void> response = ApiResponseDto.error(
+                HttpStatus.BAD_REQUEST.value(),
+                "Dữ liệu không hợp lệ",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        ApiResponseDto<Void> response = ApiResponseDto.error(
+                HttpStatus.BAD_REQUEST.value(),
+                "Dữ liệu không hợp lệ",
                 ex.getMessage(),
                 request.getRequestURI()
         );

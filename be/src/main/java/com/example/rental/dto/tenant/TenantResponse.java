@@ -3,8 +3,14 @@ package com.example.rental.dto.tenant;
 import com.example.rental.entity.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.Builder; // Thêm import này
+import lombok.NoArgsConstructor; // Thêm import này
+import lombok.AllArgsConstructor; // Thêm import này
 
 @Data
+@Builder // Thêm annotation này
+@NoArgsConstructor // Thêm annotation này
+@AllArgsConstructor // Thêm annotation này
 public class TenantResponse {
 
     private Long id;
@@ -29,5 +35,4 @@ public class TenantResponse {
 
     @Schema(description = "Trạng thái người dùng", example = "ACTIVE")
     private UserStatus status;
-
 }

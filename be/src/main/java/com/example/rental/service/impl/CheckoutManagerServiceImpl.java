@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+//import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -39,7 +39,7 @@ public class CheckoutManagerServiceImpl implements CheckoutManagerService {
     private final CheckoutRequestRepository checkoutRequestRepository;
     private final DamageReportRepository damageReportRepository;
     private final DamageImageRepository damageImageRepository;
-    private final ContractRepository contractRepository;
+    //private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
@@ -353,7 +353,9 @@ public class CheckoutManagerServiceImpl implements CheckoutManagerService {
             return InvoiceMapper.toResponse(existing);
         }
 
-        LocalDate safeDue = dueDate != null ? dueDate : LocalDate.now();
+        LocalDate safeDue = dueDate != null && !dueDate.isBefore(LocalDate.now())
+                ? dueDate
+                : LocalDate.now().plusDays(3);
 
         List<InvoiceDetail> details = buildInvoiceDetailsFromReport(dr);
         if (details.isEmpty()) {
@@ -384,8 +386,8 @@ public class CheckoutManagerServiceImpl implements CheckoutManagerService {
 
         Tenant tenant = req.getContract().getTenant();
         if (tenant != null && tenant.getEmail() != null && !tenant.getEmail().isBlank()) {
-            String subject = "[Rental] Hóa đơn trả phòng #" + saved.getId();
-            String html = InvoiceEmailTemplateUtil.buildNewInvoiceEmail(saved, tenant);
+            String subject = "[Rental] Hóa đơn tất toán #" + saved.getId();
+            String html = InvoiceEmailTemplateUtil.buildSettlementInvoiceEmail(saved, tenant);
             emailService.sendHtmlMessage(tenant.getEmail(), subject, html);
         }
 

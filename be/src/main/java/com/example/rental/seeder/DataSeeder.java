@@ -20,6 +20,7 @@ import java.util.Random;
  * Dữ liệu là những thông tin thực tế của người Việt
  */
 @Component
+@org.springframework.context.annotation.Profile("!test")
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 

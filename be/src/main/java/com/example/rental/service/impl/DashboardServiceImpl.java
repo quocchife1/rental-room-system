@@ -137,15 +137,6 @@ public class DashboardServiceImpl implements DashboardService {
                     .collect(Collectors.toList());
         }
 
-        // Convenience time filters
-        List<Invoice> invoicesInRange = allInvoices.stream()
-                .filter(inv -> inv.getCreatedAt() != null && !inv.getCreatedAt().isBefore(startDate) && !inv.getCreatedAt().isAfter(endDate))
-                .collect(Collectors.toList());
-
-        List<Contract> contractsInRange = allContracts.stream()
-                .filter(c -> c.getCreatedAt() != null && !c.getCreatedAt().isBefore(startDate) && !c.getCreatedAt().isAfter(endDate))
-                .collect(Collectors.toList());
-
         // === REVENUE ===
         BigDecimal totalRevenueThisMonth = allInvoices.stream()
                 .filter(inv -> inv.getStatus() == InvoiceStatus.PAID)

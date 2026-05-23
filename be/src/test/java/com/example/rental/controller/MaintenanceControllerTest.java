@@ -12,11 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("MaintenanceController – Integration Tests")
 class MaintenanceControllerTest {
 
@@ -58,10 +62,10 @@ class MaintenanceControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private MaintenanceRequestService maintenanceRequestService;
 
-    @MockBean
+    @MockitoBean
     private TenantRepository tenantRepository;
 
     private static final String BASE_URL = "/api/maintenance";
@@ -144,6 +148,33 @@ class MaintenanceControllerTest {
     }
 
     // =========================================================
+    // 1.1 GET /api/maintenance/board/paged
+    // =========================================================
+    @Nested
+    @DisplayName("GET /api/maintenance/board/paged")
+    class GetBoardPagedTests {
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("✅ ADMIN xem board paged → 200 + page")
+        void getBoardPaged_asAdmin_shouldReturn200() throws Exception {
+            org.springframework.data.domain.Page<MaintenanceResponse> page =
+                    new org.springframework.data.domain.PageImpl<>(List.of(sampleResponse));
+
+            when(maintenanceRequestService.getAllRequests(any(org.springframework.data.domain.Pageable.class)))
+                    .thenReturn(page);
+
+            mockMvc.perform(get(BASE_URL + "/board/paged")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content", hasSize(1)));
+        }
+    }
+
+    // =========================================================
     // 2. GET /api/maintenance/my-requests – Yêu cầu của Tenant
     // =========================================================
     @Nested
@@ -198,6 +229,56 @@ class MaintenanceControllerTest {
             mockMvc.perform(get(BASE_URL + "/my-requests"))
                     .andDo(print())
                     .andExpect(status().isForbidden());
+        }
+    }
+
+    // =========================================================
+    // 2.1 POST /api/maintenance (multipart) – Tenant create
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/maintenance")
+    class CreateRequestTests {
+
+        @Test
+        @WithMockUser(username = "tenant_test", roles = "TENANT")
+        @DisplayName("✅ TENANT tạo maintenance request → 201 Created")
+        void createRequest_asTenant_shouldReturn201() throws Exception {
+            com.example.rental.entity.Tenant fakeTenant = new com.example.rental.entity.Tenant();
+            fakeTenant.setId(10L);
+            when(tenantRepository.findByUsernameIgnoreCase("tenant_test"))
+                    .thenReturn(Optional.of(fakeTenant));
+
+            when(maintenanceRequestService.createRequest(any()))
+                    .thenReturn(sampleResponse);
+
+            MockMultipartFile image = new MockMultipartFile(
+                    "images",
+                    "photo.jpg",
+                    MediaType.IMAGE_JPEG_VALUE,
+                    "dummy".getBytes()
+            );
+
+            mockMvc.perform(multipart(BASE_URL)
+                            .file(image)
+                            .param("tenantName", "Nguyen Van Test")
+                            .param("branchCode", "CN01")
+                            .param("roomNumber", "101")
+                            .param("description", "Dieu hoa hong"))
+                    .andDo(print())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.statusCode").value(201))
+                    .andExpect(jsonPath("$.message").value("Maintenance request created"));
+        }
+
+        @Test
+        @DisplayName("❌ Không có token tạo request → 403")
+        void createRequest_withoutAuth_shouldReturn403() throws Exception {
+            mockMvc.perform(multipart(BASE_URL)
+                            .param("tenantName", "Nguyen Van Test"))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+
+            verifyNoInteractions(maintenanceRequestService);
         }
     }
 
@@ -342,6 +423,48 @@ class MaintenanceControllerTest {
         void updateRequest_asReceptionist_shouldReturn403() throws Exception {
             mockMvc.perform(put(BASE_URL + "/1")
                             .param("status", "DONE"))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+
+            verifyNoInteractions(maintenanceRequestService);
+        }
+    }
+
+    // =========================================================
+    // 4.1 POST /api/maintenance/{id}/invoice
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/maintenance/{id}/invoice")
+    class CreateInvoiceTests {
+
+        @Test
+        @WithMockUser(roles = "MAINTENANCE")
+        @DisplayName("✅ MAINTENANCE tạo invoice → 200")
+        void createInvoice_shouldReturn200() throws Exception {
+            com.example.rental.dto.maintenance.MaintenanceInvoiceCreateResponse resp =
+                    com.example.rental.dto.maintenance.MaintenanceInvoiceCreateResponse.builder()
+                            .maintenance(sampleResponse)
+                            .invoice(null)
+                            .build();
+
+            when(maintenanceRequestService.createTenantFaultInvoice(eq(1L), any()))
+                    .thenReturn(resp);
+
+            mockMvc.perform(post(BASE_URL + "/1/invoice")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"amount\":500000}"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("Maintenance invoice created"));
+        }
+
+        @Test
+        @WithMockUser(roles = "TENANT")
+        @DisplayName("❌ TENANT tạo invoice → 403")
+        void createInvoice_asTenant_shouldReturn403() throws Exception {
+            mockMvc.perform(post(BASE_URL + "/1/invoice")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"amount\":500000}"))
                     .andDo(print())
                     .andExpect(status().isForbidden());
 

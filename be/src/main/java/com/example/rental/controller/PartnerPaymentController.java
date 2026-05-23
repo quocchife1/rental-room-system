@@ -108,7 +108,7 @@ public class PartnerPaymentController {
         ServicePackage pkg = servicePackageRepository.findById(packageId)
                 .orElseThrow(() -> new ResourceNotFoundException("ServicePackage", "id", packageId));
 
-        // TODO: Tích hợp MoMo tại đây (khởi tạo giao dịch, callback, xác nhận)
+        // tích hợp MoMo tại đây (khởi tạo giao dịch, callback, xác nhận)
 
         // Tạo thanh toán đơn giản (method = TEST)
         PartnerPayment payment = PartnerPayment.builder()

@@ -4,7 +4,6 @@ import com.example.rental.dto.ApiResponseDto;
 import com.example.rental.dto.reservation.ReservationRequest;
 import com.example.rental.dto.reservation.ReservationResponse;
 import com.example.rental.dto.contract.ContractPrefillResponse;
-import com.example.rental.mapper.ReservationMapper;
 import com.example.rental.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,7 +30,6 @@ import java.util.List;
 public class ReservationController {
     
     private final ReservationService reservationService;
-    private final ReservationMapper reservationMapper;
     
     /**
      * Người thuê tạo yêu cầu giữ phòng (Online Booking)

@@ -12,7 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -53,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("InvoiceController – Integration Tests")
 class InvoiceControllerTest {
 
@@ -62,10 +65,10 @@ class InvoiceControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private InvoiceService invoiceService;
 
-    @MockBean
+    @MockitoBean
     private TenantService tenantService;
 
     private static final String BASE_URL = "/api/invoices";
@@ -357,6 +360,106 @@ class InvoiceControllerTest {
     }
 
     // =========================================================
+    // 4.1 POST /api/invoices/generate-monthly
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/invoices/generate-monthly")
+    class GenerateMonthlyTests {
+
+        @Test
+        @WithMockUser(roles = "ACCOUNTANT")
+        @DisplayName("✅ ACCOUNTANT generate monthly → 200")
+        void generateMonthly_asAccountant_shouldReturn200() throws Exception {
+            var resp = com.example.rental.dto.invoice.MonthlyInvoiceGenerateResponse.builder()
+                    .totalActiveContracts(3)
+                    .createdCount(2)
+                    .skippedExistingCount(1)
+                    .createdInvoiceIds(List.of(11L, 12L))
+                    .build();
+
+            when(invoiceService.generateMonthlyInvoices(any())).thenReturn(resp);
+
+            mockMvc.perform(post(BASE_URL + "/generate-monthly")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"year\":2025,\"month\":4}"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.statusCode").value(200))
+                    .andExpect(jsonPath("$.data.createdCount").value(2));
+        }
+
+        @Test
+        @WithMockUser(roles = "TENANT")
+        @DisplayName("❌ TENANT generate monthly → 403")
+        void generateMonthly_asTenant_shouldReturn403() throws Exception {
+            mockMvc.perform(post(BASE_URL + "/generate-monthly")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"year\":2025,\"month\":4}"))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+
+            verifyNoInteractions(invoiceService);
+        }
+    }
+
+    // =========================================================
+    // 4.2 GET /api/invoices/monthly-previews
+    // =========================================================
+    @Nested
+    @DisplayName("GET /api/invoices/monthly-previews")
+    class MonthlyPreviewsTests {
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("✅ ADMIN xem previews → 200 + list")
+        void monthlyPreviews_asAdmin_shouldReturn200() throws Exception {
+            var preview = com.example.rental.dto.invoice.ContractMonthlyInvoicePreviewResponse.builder()
+                    .contractId(10L)
+                    .branchCode("CN01")
+                    .roomNumber("101")
+                    .tenantName("Nguyen Van Test")
+                    .billingYear(2025)
+                    .billingMonth(4)
+                    .amount(new BigDecimal("3500000"))
+                    .build();
+
+            when(invoiceService.previewMonthlyInvoices(2025, 4)).thenReturn(List.of(preview));
+
+            mockMvc.perform(get(BASE_URL + "/monthly-previews")
+                            .param("year", "2025")
+                            .param("month", "4"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data[0].contractId").value(10))
+                    .andExpect(jsonPath("$.data[0].branchCode").value("CN01"));
+        }
+    }
+
+    // =========================================================
+    // 4.3 POST /api/invoices/generate-monthly/contracts/{contractId}
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/invoices/generate-monthly/contracts/{contractId}")
+    class GenerateMonthlyForContractTests {
+
+        @Test
+        @WithMockUser(roles = "DIRECTOR")
+        @DisplayName("✅ DIRECTOR generate monthly for contract → 200")
+        void generateMonthlyForContract_asDirector_shouldReturn200() throws Exception {
+            when(invoiceService.generateMonthlyInvoiceForContract(eq(10L), any()))
+                    .thenReturn(sampleInvoice);
+
+            mockMvc.perform(post(BASE_URL + "/generate-monthly/contracts/10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"year\":2025,\"month\":4}"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.contractId").value(10));
+        }
+    }
+
+    // =========================================================
     // 5. POST /api/invoices/{id}/pay – Thanh toán hóa đơn
     // =========================================================
     @Nested
@@ -402,6 +505,44 @@ class InvoiceControllerTest {
                             .param("direct", "true"))
                     .andExpect(status().isOk());
         }
+
+            /**
+             * [NEGATIVE] ACCOUNTANT không được gọi online (direct=false) → 403
+             */
+            @Test
+            @WithMockUser(roles = "ACCOUNTANT")
+            @DisplayName("❌ ACCOUNTANT direct=false → 403 Forbidden")
+            void payInvoice_accountantOnline_shouldReturn403() throws Exception {
+                mockMvc.perform(post(BASE_URL + "/1/pay")
+                        .param("direct", "false"))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.statusCode").value(403));
+
+                verifyNoInteractions(invoiceService);
+            }
+
+            /**
+             * [HAPPY PATH] TENANT thanh toán online (direct=false) → 200 + payUrl
+             */
+            @Test
+            @WithMockUser(roles = "TENANT")
+            @DisplayName("✅ TENANT direct=false → 200 + payUrl")
+            void payInvoice_tenantOnline_shouldReturnPayUrl() throws Exception {
+                var momo = com.example.rental.dto.invoice.InvoiceMomoInitiateResponse.builder()
+                    .payUrl("https://momo.test/pay")
+                    .orderId("INV-1")
+                    .build();
+
+                when(invoiceService.initiateMomoPayment(eq(1L), any())).thenReturn(momo);
+
+                mockMvc.perform(post(BASE_URL + "/1/pay")
+                        .param("direct", "false"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("MoMo initiated"))
+                    .andExpect(jsonPath("$.data.payUrl").value("https://momo.test/pay"));
+            }
 
         /**
          * [NEGATIVE] MANAGER không có quyền thanh toán hóa đơn → 403
@@ -480,6 +621,36 @@ class InvoiceControllerTest {
             verifyNoInteractions(invoiceService);
         }
     }
+
+        // =========================================================
+        // 6.1 GET /api/invoices/my-invoices/paged
+        // =========================================================
+        @Nested
+        @DisplayName("GET /api/invoices/my-invoices/paged")
+        class GetMyInvoicesPagedTests {
+
+        @Test
+        @WithMockUser(username = "tenant_test", roles = "TENANT")
+        @DisplayName("✅ TENANT xem my-invoices/paged → 200 + page")
+        void getMyInvoicesPaged_asTenant_shouldReturn200() throws Exception {
+            com.example.rental.entity.Tenant fakeTenant = new com.example.rental.entity.Tenant();
+            fakeTenant.setId(5L);
+
+            when(tenantService.findByUsername("tenant_test"))
+                .thenReturn(Optional.of(fakeTenant));
+            Page<InvoiceResponse> page = new PageImpl<>(List.of(sampleInvoice));
+            when(invoiceService.getInvoicesForTenant(eq(5L), any(Pageable.class)))
+                .thenReturn(page);
+
+            mockMvc.perform(get(BASE_URL + "/my-invoices/paged")
+                    .param("page", "0")
+                    .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
+        }
+        }
 
     // =========================================================
     // 7. POST /api/invoices/{id}/send-reminder – Gửi nhắc nhở

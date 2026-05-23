@@ -2,7 +2,6 @@ package com.example.rental.controller;
 
 import com.example.rental.dto.payment.PaymentRequest;
 import com.example.rental.dto.payment.PaymentResponse;
-import com.example.rental.dto.ApiResponseDto;
 import com.example.rental.service.PaymentService;
 import com.example.rental.service.InvoiceService;
 import com.example.rental.service.AuditLogService;

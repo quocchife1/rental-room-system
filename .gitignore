@@ -1,2 +1,4 @@
 node_modules/
 fe/node_modules/
+*.md
+*.jpg

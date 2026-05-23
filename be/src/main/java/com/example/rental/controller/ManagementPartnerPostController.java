@@ -111,7 +111,7 @@ public class ManagementPartnerPostController {
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','RECEPTIONIST')")
     public ResponseEntity<ApiResponseDto<PartnerPostResponse>> getById(@PathVariable Long id) {
         PartnerPost post = partnerPostRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tin"));
+                .orElseThrow(() -> new com.example.rental.exception.ResourceNotFoundException("PartnerPost", "id", id)); // Đã sửa
         return ResponseEntity.ok(ApiResponseDto.success(200, "Lấy chi tiết tin thành công", mapToResponse(post)));
     }
 

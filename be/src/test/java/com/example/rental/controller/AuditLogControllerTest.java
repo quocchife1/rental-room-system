@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -52,14 +52,14 @@ class AuditLogControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AuditLogService auditLogService;
 
     // URL constants
     private static final String AUDIT_BASE_URL   = "/api/audit-logs";
-    private static final String TRAIL_URL        = AUDIT_BASE_URL + "/{type}/{id}";
+    //private static final String TRAIL_URL        = AUDIT_BASE_URL + "/{type}/{id}";
     private static final String PAGED_URL        = AUDIT_BASE_URL + "/paged";
-    private static final String BY_ID_URL        = AUDIT_BASE_URL + "/{auditLogId}";
+    //private static final String BY_ID_URL        = AUDIT_BASE_URL + "/{auditLogId}";
 
     // Fake data dùng chung
     private AuditLogDTO sampleLog;

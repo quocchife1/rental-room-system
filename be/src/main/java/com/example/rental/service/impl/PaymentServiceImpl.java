@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.example.rental.entity.Payment;
 import com.example.rental.repository.PaymentRepository;
-import java.util.Optional;
+//import java.util.Optional;
 
 import java.math.BigDecimal;
 
@@ -25,7 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentResponse processPayment(PaymentRequest request) {
         // Very small stub: mark invoice as paid and record audit
-        var respInvoice = invoiceService.markPaid(request.getInvoiceId(), true);
+        invoiceService.markPaid(request.getInvoiceId(), true);
 
         PaymentResponse resp = new PaymentResponse();
         resp.setInvoiceId(request.getInvoiceId());

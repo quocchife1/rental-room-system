@@ -27,7 +27,8 @@ public interface PartnerMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "partnerCode", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(source = "phone", target = "phoneNumber") // PartnerRegisterRequest có field 'phone'
+    @Mapping(target = "contactPerson", ignore = true) // <-- Bổ sung dòng này để sửa Warn 1
+    @Mapping(source = "phone", target = "phoneNumber") 
     Partners toEntity(PartnerRegisterRequest request);
 
     /**
@@ -39,8 +40,13 @@ public interface PartnerMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "partnerCode", ignore = true)
     @Mapping(target = "status", ignore = true)
-    // PartnerUpdateProfileRequest đã có 'phoneNumber', không cần mapping thủ công
+    @Mapping(target = "createdAt", ignore = true) // <-- Bổ sung dòng này để sửa Warn 2
+    @Mapping(target = "updatedAt", ignore = true) // <-- Bổ sung dòng này để sửa Warn 2
+    
+    // Xử lý Warn 2 cho phoneNumber:
+    // NẾU DTO của bạn là 'phone', mở comment dòng dưới:
+    // @Mapping(source = "phone", target = "phoneNumber") 
+    // NẾU bạn cố tình không muốn update số điện thoại, mở comment dòng dưới:
+    @Mapping(target = "phoneNumber", ignore = true)
     void updatePartnerFromDto(PartnerUpdateProfileRequest request, @MappingTarget Partners target);
 }
-
-

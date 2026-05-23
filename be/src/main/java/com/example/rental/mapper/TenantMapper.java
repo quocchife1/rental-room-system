@@ -16,6 +16,11 @@ public interface TenantMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "address", ignore = true)
+    @Mapping(target = "fullName", ignore = true)   // Sửa warn 1
+    @Mapping(target = "cccd", ignore = true)       // Sửa warn 1
+    @Mapping(target = "studentId", ignore = true)  // Sửa warn 1
+    @Mapping(target = "university", ignore = true) // Sửa warn 1
+    @Mapping(target = "dob", ignore = true)        // Sửa warn 1
     @Mapping(source = "phone", target = "phoneNumber")
     Tenant registerRequestToTenant(AuthRegisterRequest registerRequest);
 
@@ -28,5 +33,10 @@ public interface TenantMapper {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "cccd", ignore = true)       
+    @Mapping(target = "studentId", ignore = true)  
+    @Mapping(target = "university", ignore = true) 
     void updateTenantFromDto(TenantUpdateProfileRequest request, @MappingTarget Tenant target);
 }

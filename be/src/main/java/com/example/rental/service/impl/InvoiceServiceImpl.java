@@ -819,7 +819,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy hóa đơn"));
 
-        if (invoice.getStatus() == InvoiceStatus.UNPAID && invoice.getDueDate().isBefore(LocalDate.now())) {
+        if (invoice.getStatus() == InvoiceStatus.UNPAID && invoice.getDueDate() != null && invoice.getDueDate().isBefore(LocalDate.now())) {
             invoice.setStatus(InvoiceStatus.OVERDUE);
             invoiceRepository.save(invoice);
 
@@ -838,10 +838,14 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         for (Invoice inv : invoices) {
             if (inv.getStatus() == InvoiceStatus.UNPAID) {
+                if (inv.getDueDate() == null) {
+                    continue;
+                }
+
                 long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(today, inv.getDueDate());
 
                 Tenant tenant = inv.getContract().getTenant();
-                if (daysLeft == 7 || daysLeft == 3 || daysLeft == 1) {
+                if (daysLeft == 1) {
                     String subject = "[Rental] Nhắc nhở thanh toán hóa đơn #" + inv.getId();
                     String html = InvoiceEmailTemplateUtil.buildReminderEmail(inv, tenant);
                     emailService.sendHtmlMessage(tenant.getEmail(), subject, html);

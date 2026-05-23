@@ -1,6 +1,6 @@
 package com.example.rental.controller;
 
-import com.example.rental.dto.ApiResponseDto;
+//import com.example.rental.dto.ApiResponseDto;
 import com.example.rental.dto.tenant.TenantResponse;
 import com.example.rental.dto.tenant.TenantUpdateProfileRequest;
 import com.example.rental.entity.UserStatus;
@@ -14,11 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("TenantController – Integration Tests")
 class TenantControllerTest {
 
@@ -55,14 +58,14 @@ class TenantControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private TenantService tenantService;
 
-    @MockBean
+    @MockitoBean
     private TenantMapper tenantMapper;
 
     private static final String BASE_URL   = "/api/management/tenants";
-    private static final String STATUS_URL = BASE_URL + "/{id}/status";
+    //private static final String STATUS_URL = BASE_URL + "/{id}/status";
 
     private com.example.rental.entity.Tenant sampleEntity;
     private TenantResponse sampleResponse;
@@ -192,18 +195,18 @@ class TenantControllerTest {
         }
 
         /**
-         * [NEGATIVE] ID tenant không tồn tại → ResourceNotFoundException → 500
-         * (ResourceNotFoundException không có handler riêng → catch-all → 500)
+         * [NEGATIVE] ID tenant không tồn tại → ResourceNotFoundException → 404
          */
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("❌ Tenant ID không tồn tại → 500")
-        void getTenantById_notFound_shouldReturn500() throws Exception {
+        @DisplayName("❌ Tenant ID không tồn tại → 404")
+        void getTenantById_notFound_shouldReturn404() throws Exception {
             when(tenantService.findById(9999L)).thenReturn(Optional.empty());
 
             mockMvc.perform(get(BASE_URL + "/9999"))
                     .andDo(print())
-                    .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.statusCode").value(404));
         }
 
         /**
@@ -286,6 +289,52 @@ class TenantControllerTest {
 
             verifyNoInteractions(tenantService);
         }
+
+        /**
+         * [NEGATIVE] Thiếu fullName → 400 Bad Request (validation)
+         */
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("❌ Thiếu fullName → 400 Bad Request")
+        void updateTenantProfile_missingFullName_shouldReturn400() throws Exception {
+            TenantUpdateProfileRequest req = new TenantUpdateProfileRequest();
+            req.setFullName("");
+            req.setPhoneNumber("0999000111");
+            req.setAddress("789 Lê Thánh Tôn, TP.HCM");
+            req.setDob("1990-01-01");
+
+            mockMvc.perform(patch(BASE_URL + "/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.statusCode").value(400));
+
+            verifyNoInteractions(tenantService);
+        }
+
+        /**
+         * [NEGATIVE] Thiếu address → 400 Bad Request (validation)
+         */
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("❌ Thiếu address → 400 Bad Request")
+        void updateTenantProfile_missingAddress_shouldReturn400() throws Exception {
+            TenantUpdateProfileRequest req = new TenantUpdateProfileRequest();
+            req.setFullName("Nguyen Van Test");
+            req.setPhoneNumber("0999000111");
+            req.setAddress(" ");
+            req.setDob("1990-01-01");
+
+            mockMvc.perform(patch(BASE_URL + "/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.statusCode").value(400));
+
+            verifyNoInteractions(tenantService);
+        }
     }
 
     // =========================================================
@@ -343,17 +392,15 @@ class TenantControllerTest {
          */
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("❌ Status không hợp lệ (DELETED) → 400 Bad Request")
+        @DisplayName("❌ Status không hợp lệ → 400 Bad Request")
         void updateStatus_invalidStatus_shouldReturn400() throws Exception {
             // DELETED parse thành công từ enum nhưng bị reject trong controller logic
             // nên IllegalArgumentException được throw → GlobalExceptionHandler → 400
-            // Tuy nhiên nếu DELETED không tồn tại trong enum → MethodArgumentTypeMismatchException → 500
-            // Dùng ACTIVE sẽ pass. Dùng PENDING để test enum-mismatch → 500
             mockMvc.perform(patch(BASE_URL + "/1/status")
                             .param("status", "INVALID_STATUS"))
                     .andDo(print())
-                    // Enum parse thất bại → MethodArgumentTypeMismatchException → catch-all → 500
-                    .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.statusCode").value(400));
 
             verifyNoInteractions(tenantService);
         }

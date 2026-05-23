@@ -12,7 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -47,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("RoomController – Integration Tests")
 class RoomControllerTest {
 
@@ -56,17 +59,17 @@ class RoomControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private RoomService roomService;
 
     // URL Constants
     private static final String BASE_URL        = "/api/rooms";
-    private static final String BY_ID_URL       = BASE_URL + "/{id}";
-    private static final String BY_CODE_URL     = BASE_URL + "/code/{code}";
-    private static final String BY_BRANCH_URL   = BASE_URL + "/branch/{branchCode}";
-    private static final String BY_STATUS_URL   = BASE_URL + "/status/{status}";
-    private static final String STATUS_URL      = BASE_URL + "/{id}/status";
-    private static final String DESC_URL        = BASE_URL + "/{id}/description";
+    //private static final String BY_ID_URL       = BASE_URL + "/{id}";
+    //private static final String BY_CODE_URL     = BASE_URL + "/code/{code}";
+    //private static final String BY_BRANCH_URL   = BASE_URL + "/branch/{branchCode}";
+    //private static final String BY_STATUS_URL   = BASE_URL + "/status/{status}";
+    //private static final String STATUS_URL      = BASE_URL + "/{id}/status";
+    //private static final String DESC_URL        = BASE_URL + "/{id}/description";
 
     // Fake data dùng chung
     private RoomResponse sampleRoom;
@@ -261,6 +264,30 @@ class RoomControllerTest {
     }
 
     // =========================================================
+    // 4.1 GET /api/rooms/branch/{branchCode}/paged
+    // =========================================================
+    @Nested
+    @DisplayName("GET /api/rooms/branch/{branchCode}/paged")
+    class GetRoomsByBranchPagedTests {
+
+        @Test
+        @DisplayName("✅ Lấy phòng theo branchCode (paged) → 200 + page content")
+        void getRoomsByBranchCodePaged_shouldReturn200WithPage() throws Exception {
+            Page<RoomResponse> page = new PageImpl<>(sampleRoomList);
+            when(roomService.getRoomsByBranchCode(eq("CN01"), any(Pageable.class))).thenReturn(page);
+
+            mockMvc.perform(get(BASE_URL + "/branch/CN01/paged")
+                            .param("page", "0")
+                            .param("size", "5"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content", hasSize(1)))
+                    .andExpect(jsonPath("$.data.content[0].roomCode").value("CN01101"));
+        }
+    }
+
+    // =========================================================
     // 5. GET /api/rooms/status/{status}
     // =========================================================
     @Nested
@@ -293,6 +320,29 @@ class RoomControllerTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data").isArray());
+        }
+    }
+
+    // =========================================================
+    // 5.1 GET /api/rooms/status/{status}/paged
+    // =========================================================
+    @Nested
+    @DisplayName("GET /api/rooms/status/{status}/paged")
+    class GetRoomsByStatusPagedTests {
+
+        @Test
+        @DisplayName("✅ Lấy phòng theo status (paged) → 200 + page content")
+        void getRoomsByStatusPaged_shouldReturn200WithPage() throws Exception {
+            Page<RoomResponse> page = new PageImpl<>(sampleRoomList);
+            when(roomService.getRoomsByStatus(eq(RoomStatus.AVAILABLE), any(Pageable.class))).thenReturn(page);
+
+            mockMvc.perform(get(BASE_URL + "/status/AVAILABLE/paged")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.content[0].status").value("AVAILABLE"));
         }
     }
 

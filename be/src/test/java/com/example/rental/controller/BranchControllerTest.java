@@ -11,11 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+    @Transactional
 @DisplayName("BranchController – Integration Tests")
 class BranchControllerTest {
 
@@ -50,12 +53,12 @@ class BranchControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private BranchService branchService;
+    @MockitoBean
+    private BranchService branchService;  
 
     private static final String BASE_URL    = "/api/branches";
-    private static final String BY_ID_URL   = BASE_URL + "/{id}";
-    private static final String BY_CODE_URL = BASE_URL + "/code/{code}";
+    //private static final String BY_ID_URL   = BASE_URL + "/{id}";
+    //private static final String BY_CODE_URL = BASE_URL + "/code/{code}";
 
     // Fake data dùng chung
     private BranchResponse sampleBranch;
@@ -299,6 +302,40 @@ class BranchControllerTest {
         }
 
         /**
+         * [NEGATIVE] Không có token → 403
+         */
+        @Test
+        @DisplayName("❌ Không có token tạo chi nhánh → 403")
+        void createBranch_withoutAuth_shouldReturn403() throws Exception {
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(validRequest)))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+
+            verifyNoInteractions(branchService);
+        }
+
+        /**
+         * [NEGATIVE] Thiếu branchCode → 400 (validation)
+         */
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("❌ Thiếu branchCode → 400 Bad Request")
+        void createBranch_missingBranchCode_shouldReturn400() throws Exception {
+            validRequest.setBranchCode("");
+
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(validRequest)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.statusCode").value(400));
+
+            verifyNoInteractions(branchService);
+        }
+
+        /**
          * [NEGATIVE] Tên chi nhánh đã tồn tại → 400 (IllegalArgumentException)
          */
         @Test
@@ -363,6 +400,25 @@ class BranchControllerTest {
                     .andDo(print())
                     .andExpect(status().isForbidden());
         }
+
+            /**
+             * [NEGATIVE] Thiếu branchName → 400 (validation)
+             */
+            @Test
+            @WithMockUser(roles = "ADMIN")
+            @DisplayName("❌ Thiếu branchName → 400 Bad Request")
+            void updateBranch_missingBranchName_shouldReturn400() throws Exception {
+                validRequest.setBranchName("");
+
+                mockMvc.perform(put(BASE_URL + "/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.statusCode").value(400));
+
+                verifyNoInteractions(branchService);
+            }
     }
 
     // =========================================================

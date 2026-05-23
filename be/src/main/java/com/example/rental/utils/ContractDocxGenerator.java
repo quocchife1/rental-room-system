@@ -58,8 +58,7 @@ public class ContractDocxGenerator {
         String priceInWords = NumberToVietnameseWords.convert(room.getPrice().longValue());
         String depositInWords = NumberToVietnameseWords.convert(contract.getDeposit().longValue());
 
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("vi", "VN"));
-        String startDateFormatted = contract.getStartDate().format(dateFormatter);
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.of("vi", "VN"));        String startDateFormatted = contract.getStartDate().format(dateFormatter);
         String endDateFormatted = contract.getEndDate() != null ? contract.getEndDate().format(dateFormatter) : "";
 
         // Map placeholder -> value

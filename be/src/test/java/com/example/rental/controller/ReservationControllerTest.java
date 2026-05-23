@@ -2,6 +2,7 @@ package com.example.rental.controller;
 
 import com.example.rental.dto.reservation.ReservationRequest;
 import com.example.rental.dto.reservation.ReservationResponse;
+import com.example.rental.dto.contract.ContractPrefillResponse;
 import com.example.rental.entity.VisitTimeSlot;
 import com.example.rental.mapper.ReservationMapper;
 import com.example.rental.service.ReservationService;
@@ -14,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,13 +53,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *  - PUT /{id}/mark-no-show          → ADMIN, MANAGER, RECEPTIONIST
  *
  * Chiến lược:
- *  - @MockBean ReservationService, ReservationMapper
+ *  - @MockitoBean ReservationService, ReservationMapper
  *  - @WithMockUser để giả lập các role khác nhau
  *  - Không chạm DB, không tạo reservation thật
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("ReservationController – Integration Tests")
 class ReservationControllerTest {
 
@@ -66,20 +70,20 @@ class ReservationControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private ReservationService reservationService;
 
-    @MockBean
+    @MockitoBean
     private ReservationMapper reservationMapper;
 
     private static final String BASE_URL        = "/api/reservations";
-    private static final String BY_ID_URL       = BASE_URL + "/{id}";
-    private static final String CONFIRM_URL     = BASE_URL + "/{id}/confirm";
-    private static final String MY_RESV_URL     = BASE_URL + "/my-reservations";
-    private static final String BY_ROOM_URL     = BASE_URL + "/room/{roomId}";
-    private static final String BY_STATUS_URL   = BASE_URL + "/status/{status}";
-    private static final String MARK_DONE_URL   = BASE_URL + "/{id}/mark-completed";
-    private static final String NO_SHOW_URL     = BASE_URL + "/{id}/mark-no-show";
+    //private static final String BY_ID_URL       = BASE_URL + "/{id}";
+    //private static final String CONFIRM_URL     = BASE_URL + "/{id}/confirm";
+    //private static final String MY_RESV_URL     = BASE_URL + "/my-reservations";
+    //private static final String BY_ROOM_URL     = BASE_URL + "/room/{roomId}";
+    //private static final String BY_STATUS_URL   = BASE_URL + "/status/{status}";
+    //private static final String MARK_DONE_URL   = BASE_URL + "/{id}/mark-completed";
+    //private static final String NO_SHOW_URL     = BASE_URL + "/{id}/mark-no-show";
 
     // Fake data dùng chung
     private ReservationResponse sampleReservation;
@@ -516,6 +520,93 @@ class ReservationControllerTest {
         }
     }
 
+        // =========================================================
+        // 6.1 GET /api/reservations/status/{status}
+        // =========================================================
+        @Nested
+        @DisplayName("GET /api/reservations/status/{status}")
+        class GetByStatusTests {
+
+                @Test
+                @WithMockUser(roles = "ADMIN")
+                @DisplayName("✅ ADMIN lấy danh sách theo status → 200 + page")
+                void getReservationsByStatus_asAdmin_shouldReturn200() throws Exception {
+                        Page<ReservationResponse> page = new PageImpl<>(List.of(sampleReservation));
+                        when(reservationService.getReservationsByStatus(eq("PENDING"), any(Pageable.class))).thenReturn(page);
+
+                        mockMvc.perform(get(BASE_URL + "/status/PENDING")
+                                                        .param("page", "0")
+                                                        .param("size", "10"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.content").isArray())
+                                        .andExpect(jsonPath("$.data.content", hasSize(1)))
+                                        .andExpect(jsonPath("$.data.content[0].status").value("PENDING"));
+                }
+
+                @Test
+                @WithMockUser(roles = "GUEST")
+                @DisplayName("❌ GUEST lấy theo status → 403")
+                void getReservationsByStatus_asGuest_shouldReturn403() throws Exception {
+                        mockMvc.perform(get(BASE_URL + "/status/PENDING"))
+                                        .andDo(print())
+                                        .andExpect(status().isForbidden());
+
+                        verifyNoInteractions(reservationService);
+                }
+        }
+
+        // =========================================================
+        // 6.2 GET /api/reservations/search
+        // =========================================================
+        @Nested
+        @DisplayName("GET /api/reservations/search")
+        class SearchReservationsTests {
+
+                @Test
+                @WithMockUser(roles = "RECEPTIONIST")
+                @DisplayName("✅ RECEPTIONIST tra cứu giữ phòng → 200 + page")
+                void search_asReceptionist_shouldReturn200() throws Exception {
+                        Page<ReservationResponse> page = new PageImpl<>(List.of(sampleReservation));
+                        when(reservationService.searchReservations(eq("RES-2025"), any(Pageable.class))).thenReturn(page);
+
+                        mockMvc.perform(get(BASE_URL + "/search")
+                                                        .param("q", "RES-2025")
+                                                        .param("page", "0")
+                                                        .param("size", "10"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.content").isArray())
+                                        .andExpect(jsonPath("$.data.content", hasSize(1)));
+                }
+        }
+
+        // =========================================================
+        // 6.3 GET /api/reservations/my-branch
+        // =========================================================
+        @Nested
+        @DisplayName("GET /api/reservations/my-branch")
+        class GetMyBranchReservationsTests {
+
+                @Test
+                @WithMockUser(roles = "MANAGER")
+                @DisplayName("✅ MANAGER lấy danh sách theo chi nhánh → 200")
+                void getMyBranchReservations_asManager_shouldReturn200() throws Exception {
+                        Page<ReservationResponse> page = new PageImpl<>(List.of(sampleReservation));
+                        when(reservationService.getMyBranchReservations(eq("PENDING"), eq("RES"), any(Pageable.class))).thenReturn(page);
+
+                        mockMvc.perform(get(BASE_URL + "/my-branch")
+                                                        .param("status", "PENDING")
+                                                        .param("q", "RES")
+                                                        .param("page", "0")
+                                                        .param("size", "10"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.content").isArray())
+                                        .andExpect(jsonPath("$.data.content", hasSize(1)));
+                }
+        }
+
     // =========================================================
     // 7. PUT /{id}/mark-no-show – Đánh dấu không đến
     // =========================================================
@@ -591,4 +682,88 @@ class ReservationControllerTest {
                     .andExpect(status().isForbidden());
         }
     }
+
+        // =========================================================
+        // 9. POST /api/reservations/{id}/convert-to-contract
+        // =========================================================
+        @Nested
+        @DisplayName("POST /api/reservations/{id}/convert-to-contract")
+        class ConvertToContractTests {
+
+                @Test
+                @WithMockUser(roles = "ADMIN")
+                @DisplayName("✅ ADMIN convert to contract → 200 + contractId")
+                void convertToContract_asAdmin_shouldReturn200() throws Exception {
+                        when(reservationService.convertReservationToContract(1L)).thenReturn(99L);
+
+                        mockMvc.perform(post(BASE_URL + "/1/convert-to-contract"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data").value(99));
+                }
+
+                @Test
+                @WithMockUser(roles = "TENANT")
+                @DisplayName("❌ TENANT convert to contract → 403")
+                void convertToContract_asTenant_shouldReturn403() throws Exception {
+                        mockMvc.perform(post(BASE_URL + "/1/convert-to-contract"))
+                                        .andDo(print())
+                                        .andExpect(status().isForbidden());
+
+                        verifyNoInteractions(reservationService);
+                }
+        }
+
+        // =========================================================
+        // 10. GET /api/reservations/{id}/contract-prefill
+        // =========================================================
+        @Nested
+        @DisplayName("GET /api/reservations/{id}/contract-prefill")
+        class ContractPrefillTests {
+
+                @Test
+                @WithMockUser(roles = "RECEPTIONIST")
+                @DisplayName("✅ RECEPTIONIST lấy prefill → 200 + data")
+                void getContractPrefill_asReceptionist_shouldReturn200() throws Exception {
+                        ContractPrefillResponse prefill = new ContractPrefillResponse();
+                        prefill.setReservationId(1L);
+                        prefill.setBranchCode("CN01");
+                        prefill.setRoomNumber("101");
+
+                        when(reservationService.getContractPrefill(1L)).thenReturn(prefill);
+
+                        mockMvc.perform(get(BASE_URL + "/1/contract-prefill"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.reservationId").value(1))
+                                        .andExpect(jsonPath("$.data.branchCode").value("CN01"))
+                                        .andExpect(jsonPath("$.data.roomNumber").value("101"));
+                }
+        }
+
+        // =========================================================
+        // 11. PUT /api/reservations/{id}/mark-contracted
+        // =========================================================
+        @Nested
+        @DisplayName("PUT /api/reservations/{id}/mark-contracted")
+        class MarkContractedTests {
+
+                @Test
+                @WithMockUser(roles = "ADMIN")
+                @DisplayName("✅ ADMIN đánh dấu contracted → 200")
+                void markContracted_asAdmin_shouldReturn200() throws Exception {
+                        ReservationResponse contracted = ReservationResponse.builder()
+                                        .id(1L)
+                                        .reservationCode("RES-2025-001")
+                                        .status("CONTRACTED")
+                                        .build();
+
+                        when(reservationService.markContracted(1L)).thenReturn(contracted);
+
+                        mockMvc.perform(put(BASE_URL + "/1/mark-contracted"))
+                                        .andDo(print())
+                                        .andExpect(status().isOk())
+                                        .andExpect(jsonPath("$.data.status").value("CONTRACTED"));
+                }
+        }
 }

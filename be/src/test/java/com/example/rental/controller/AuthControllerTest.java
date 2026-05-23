@@ -2,10 +2,15 @@ package com.example.rental.controller;
 
 import com.example.rental.dto.auth.AuthLoginRequest;
 import com.example.rental.dto.auth.AuthResponse;
+import com.example.rental.dto.auth.EmployeeRegisterRequest;
 import com.example.rental.dto.auth.GuestRegisterRequest;
+import com.example.rental.dto.auth.PartnerRegisterRequest;
+import com.example.rental.dto.auth.TenantRegisterRequest;
+import com.example.rental.entity.EmployeePosition;
 import com.example.rental.service.AuditLogService;
 import com.example.rental.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,14 +18,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -37,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("AuthController – Integration Tests")
 class AuthControllerTest {
 
@@ -47,10 +59,10 @@ class AuthControllerTest {
     private ObjectMapper objectMapper;
 
     // ----- Mock dependencies -----
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private AuditLogService auditLogService;
 
     // ----- Constant test data (không hardcode phụ thuộc DB) -----
@@ -58,6 +70,9 @@ class AuthControllerTest {
     private static final String REGISTER_GUEST_URL = "/api/auth/register/guest";
 
     private GuestRegisterRequest validGuestRequest;
+    private TenantRegisterRequest validTenantRequest;
+    private PartnerRegisterRequest validPartnerRequest;
+    private EmployeeRegisterRequest validEmployeeRequest;
     private AuthLoginRequest validLoginRequest;
     private AuthResponse mockAuthResponse;
 
@@ -77,6 +92,41 @@ class AuthControllerTest {
         validGuestRequest.setPhone("0359123456");
         validGuestRequest.setFullName("Nguyen Van Test");
         validGuestRequest.setDob("2000-01-15");
+
+        // --- Valid tenant register request ---
+        validTenantRequest = new TenantRegisterRequest();
+        validTenantRequest.setUsername("tenant_" + uniqueSuffix);
+        validTenantRequest.setPassword("Password@123");
+        validTenantRequest.setEmail("tenant_" + uniqueSuffix + "@example.com");
+        validTenantRequest.setPhone("0359123456");
+        validTenantRequest.setFullName("Nguyen Van Tenant");
+        validTenantRequest.setCccd("079123456789");
+        validTenantRequest.setStudentId("SV" + uniqueSuffix);
+        validTenantRequest.setUniversity("Dai hoc Bach Khoa");
+        validTenantRequest.setAddress("123 Le Loi, Quan 1");
+
+        // --- Valid partner register request ---
+        validPartnerRequest = new PartnerRegisterRequest();
+        validPartnerRequest.setUsername("partner_" + uniqueSuffix);
+        validPartnerRequest.setPassword("Password@123");
+        validPartnerRequest.setEmail("partner_" + uniqueSuffix + "@example.com");
+        validPartnerRequest.setPhone("0359123456");
+        validPartnerRequest.setFullName("Nguyen Van Partner");
+        validPartnerRequest.setCompanyName("Nha tro X");
+        validPartnerRequest.setAddress("TP HCM");
+        validPartnerRequest.setTaxCode("TAX" + uniqueSuffix);
+
+        // --- Valid employee register request ---
+        validEmployeeRequest = new EmployeeRegisterRequest();
+        validEmployeeRequest.setUsername("employee_" + uniqueSuffix);
+        validEmployeeRequest.setPassword("Password@123");
+        validEmployeeRequest.setEmail("employee_" + uniqueSuffix + "@example.com");
+        validEmployeeRequest.setPhone("0359123456");
+        validEmployeeRequest.setFullName("Nguyen Van Employee");
+        validEmployeeRequest.setBranchCode("CN01");
+        validEmployeeRequest.setPosition(EmployeePosition.RECEPTIONIST);
+        validEmployeeRequest.setSalary(new BigDecimal("10000000"));
+        validEmployeeRequest.setHireDate(LocalDate.now().minusDays(1));
 
         // --- Valid login request ---
         validLoginRequest = new AuthLoginRequest();
@@ -368,6 +418,213 @@ class AuthControllerTest {
                     .andExpect(status().isBadRequest());
 
             verifyNoInteractions(authService);
+        }
+    }
+
+    // =========================================================
+    // 3. Register – Tenant
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/auth/register/tenant")
+    class RegisterTenantTests {
+
+        @Test
+        @DisplayName("✅ Register tenant hợp lệ → 201 Created")
+        void registerTenant_withValidData_shouldReturn201() throws Exception {
+            doNothing().when(authService).registerTenant(any());
+
+            mockMvc.perform(post("/api/auth/register/tenant")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validTenantRequest)))
+                    .andDo(print())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.statusCode").value(201))
+                    .andExpect(jsonPath("$.message").value("Tenant registered successfully"));
+
+            verify(authService, times(1)).registerTenant(any());
+        }
+
+        @Test
+        @DisplayName("❌ Register tenant thiếu fullName → 400 Bad Request")
+        void registerTenant_missingFullName_shouldReturn400() throws Exception {
+            validTenantRequest.setFullName(null);
+
+            mockMvc.perform(post("/api/auth/register/tenant")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validTenantRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+
+        @Test
+        @DisplayName("❌ Register tenant thiếu CCCD → 400 Bad Request")
+        void registerTenant_missingCccd_shouldReturn400() throws Exception {
+            validTenantRequest.setCccd(null);
+
+            mockMvc.perform(post("/api/auth/register/tenant")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validTenantRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+
+        @Test
+        @DisplayName("❌ Register tenant thiếu address → 400 Bad Request")
+        void registerTenant_missingAddress_shouldReturn400() throws Exception {
+            validTenantRequest.setAddress(null);
+
+            mockMvc.perform(post("/api/auth/register/tenant")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validTenantRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+    }
+
+    // =========================================================
+    // 4. Register – Partner
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/auth/register/partner")
+    class RegisterPartnerTests {
+
+        @Test
+        @DisplayName("✅ Register partner hợp lệ → 201 Created")
+        void registerPartner_withValidData_shouldReturn201() throws Exception {
+            doNothing().when(authService).registerPartner(any());
+
+            mockMvc.perform(post("/api/auth/register/partner")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validPartnerRequest)))
+                    .andDo(print())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.statusCode").value(201))
+                    .andExpect(jsonPath("$.message").value("Đăng ký tài khoản chủ trọ thành công"));
+
+            verify(authService, times(1)).registerPartner(any());
+        }
+
+        @Test
+        @DisplayName("❌ Register partner thiếu fullName → 400 Bad Request")
+        void registerPartner_missingFullName_shouldReturn400() throws Exception {
+            validPartnerRequest.setFullName(null);
+
+            mockMvc.perform(post("/api/auth/register/partner")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validPartnerRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+    }
+
+    // =========================================================
+    // 5. Register – Employee
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/auth/register/employee")
+    class RegisterEmployeeTests {
+
+        @Test
+        @DisplayName("✅ Register employee hợp lệ → 201 Created")
+        void registerEmployee_withValidData_shouldReturn201() throws Exception {
+            doNothing().when(authService).registerEmployee(any());
+
+            mockMvc.perform(post("/api/auth/register/employee")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validEmployeeRequest)))
+                    .andDo(print())
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.statusCode").value(201))
+                    .andExpect(jsonPath("$.message").value("Employee registered successfully"));
+
+            verify(authService, times(1)).registerEmployee(any());
+        }
+
+        @Test
+        @DisplayName("❌ Register employee thiếu branchCode → 400 Bad Request")
+        void registerEmployee_missingBranchCode_shouldReturn400() throws Exception {
+            validEmployeeRequest.setBranchCode(null);
+
+            mockMvc.perform(post("/api/auth/register/employee")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validEmployeeRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+
+        @Test
+        @DisplayName("❌ Register employee thiếu position → 400 Bad Request")
+        void registerEmployee_missingPosition_shouldReturn400() throws Exception {
+            validEmployeeRequest.setPosition(null);
+
+            mockMvc.perform(post("/api/auth/register/employee")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(validEmployeeRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(authService);
+        }
+    }
+
+    // =========================================================
+    // 6. POST /api/auth/logout
+    // =========================================================
+    @Nested
+    @DisplayName("POST /api/auth/logout")
+    class LogoutTests {
+
+        @Test
+        @WithMockUser(username = "tester", roles = "ADMIN")
+        @DisplayName("✅ Logout có auth → 200 + ghi audit log")
+        void logout_withAuth_shouldReturn200() throws Exception {
+            mockMvc.perform(post("/api/auth/logout"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.statusCode").value(200))
+                    .andExpect(jsonPath("$.message").value("Logout logged"))
+                    .andExpect(jsonPath("$.data").value("OK"));
+
+            var usernameCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+            var roleCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+            verify(auditLogService, times(1)).logAction(
+                    usernameCaptor.capture(),
+                    roleCaptor.capture(),
+                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+            );
+
+            Assertions.assertThat(usernameCaptor.getValue()).isEqualTo("tester");
+            Assertions.assertThat(roleCaptor.getValue()).isEqualTo("ADMIN");
+        }
+
+        @Test
+        @DisplayName("✅ Logout không auth → 200 + audit ANONYMOUS")
+        void logout_withoutAuth_shouldReturn200() throws Exception {
+            mockMvc.perform(post("/api/auth/logout"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.statusCode").value(200));
+
+            var usernameCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+            var roleCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+            verify(auditLogService, times(1)).logAction(
+                    usernameCaptor.capture(),
+                    roleCaptor.capture(),
+                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+            );
+
+            Assertions.assertThat(usernameCaptor.getValue()).isEqualTo("ANONYMOUS");
+            Assertions.assertThat(roleCaptor.getValue()).isEqualTo("ANONYMOUS");
         }
     }
 }

@@ -13,13 +13,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+//import org.springframework.boot.test.mock.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,27 +44,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *    ngay trong controller trước khi gọi service.
  *
  * Chiến lược:
- *  - @MockBean EmployeeService, EmployeeMapper
+ *  - @MockitoBean EmployeeService, EmployeeMapper
  *  - Test theo đủ 3 chiều: role đúng (200), role sai (403), data sai (400)
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @DisplayName("EmployeeController – Integration Tests")
 class EmployeeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private EmployeeService employeeService;
 
-    @MockBean
+    @MockitoBean
     private EmployeeMapper employeeMapper;
 
     private static final String BASE_URL    = "/api/management/employees";
     private static final String PAGED_URL   = BASE_URL + "/paged";
-    private static final String STATUS_URL  = BASE_URL + "/{id}/status";
+    //private static final String STATUS_URL  = BASE_URL + "/{id}/status";
 
     // Fake entity và response
     private com.example.rental.entity.Employees sampleEntity;
@@ -250,22 +253,18 @@ class EmployeeControllerTest {
         }
 
         /**
-         * [NEGATIVE] ID không tồn tại → ResourceNotFoundException → 500.
-         *
-         * Lý do: ResourceNotFoundException không có @ExceptionHandler riêng trong
-         * GlobalExceptionHandler → bị bắt bởi catch-all Exception → 500 Internal Server Error.
+         * [NEGATIVE] ID không tồn tại → ResourceNotFoundException → 404.
          */
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("❌ ID nhân viên không tồn tại → 500 (ResourceNotFoundException)")
-        void getEmployeeById_notFound_shouldReturn500() throws Exception {
+        @DisplayName("❌ ID nhân viên không tồn tại → 404")
+        void getEmployeeById_notFound_shouldReturn404() throws Exception {
             when(employeeService.findById(9999L)).thenReturn(Optional.empty());
 
             mockMvc.perform(get(BASE_URL + "/9999"))
                     .andDo(print())
-                    // ResourceNotFoundException không có handler riêng → catch-all → 500
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(jsonPath("$.statusCode").value(500));
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.statusCode").value(404));
         }
 
         /**
@@ -333,38 +332,30 @@ class EmployeeControllerTest {
         }
 
         /**
-         * [NEGATIVE] Status không hợp lệ (PENDING) → 400.
-         *
-         * Controller kiểm tra: if (status != ACTIVE && status != BANNED) throw IllegalArgumentException
-         * GlobalExceptionHandler: IllegalArgumentException → 400 Bad Request.
-         * Nhưng PENDING không parse được từ UserStatus enum → MethodArgumentTypeMismatchException →
-         * được xử lý bởi catch-all Exception handler → 500.
-         *
-         * Đổi expected status thành 500 cho đúng thực tế.
+         * [NEGATIVE] Status không hợp lệ → 400 (type mismatch).
          */
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("❌ Status không hợp lệ (PENDING) → 500 (TypeMismatch)")
-        void updateStatus_invalidStatus_shouldReturn500() throws Exception {
+        @DisplayName("❌ Status không hợp lệ → 400 Bad Request")
+        void updateStatus_invalidStatus_shouldReturn400() throws Exception {
             mockMvc.perform(patch(BASE_URL + "/1/status")
                             .param("status", "PENDING"))
                     .andDo(print())
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.statusCode").value(400));
         }
 
         /**
-         * [NEGATIVE] Thiếu param status → MissingServletRequestParameterException → 500.
-         *
-         * GlobalExceptionHandler không có handler riêng cho MissingServletRequestParameterException
-         * → bị bắt bởi catch-all Exception → 500.
+         * [NEGATIVE] Thiếu param status → 400.
          */
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("❌ Thiếu param status → 500 (không có handler riêng)")
-        void updateStatus_missingStatusParam_shouldReturn500() throws Exception {
+        @DisplayName("❌ Thiếu param status → 400 Bad Request")
+        void updateStatus_missingStatusParam_shouldReturn400() throws Exception {
             mockMvc.perform(patch(BASE_URL + "/1/status"))
                     .andDo(print())
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.statusCode").value(400));
         }
 
         /**

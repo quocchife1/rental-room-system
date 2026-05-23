@@ -2,7 +2,6 @@ package com.example.rental.controller;
 
 import com.example.rental.dto.dashboard.DirectorDashboardDTO;
 import com.example.rental.dto.ApiResponseDto;
-import org.springframework.data.domain.Page;
 import com.example.rental.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

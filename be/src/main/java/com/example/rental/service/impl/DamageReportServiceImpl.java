@@ -34,7 +34,7 @@ public class DamageReportServiceImpl implements DamageReportService {
     private final DamageImageRepository damageImageRepository;
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
-    private final AuditLogRepository auditLogRepository;
+    //private final AuditLogRepository auditLogRepository;
 
     private static final Path UPLOAD_PATH = Paths.get(System.getProperty("user.dir"), "uploads", "damage");
 
